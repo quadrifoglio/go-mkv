@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/dreamvids/webm-info/ebml"
 )
 
 const (
@@ -11,5 +14,13 @@ const (
 
 func main() {
 	fmt.Println(Name, "-", Version)
-	fmt.Println("Usage: webm-info <file>")
+
+	if len(os.Args) == 2 {
+		err := ebml.Parse(os.Args[1])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Usage: webm-info <file>\n")
+	}
 }
