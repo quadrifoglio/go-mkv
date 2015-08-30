@@ -58,9 +58,7 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		*cursor += 1
 		b = data[*cursor]
 
-		size := getElementSize(data, *cursor)
-		*cursor += size
-
+		size := getElementSize(data, cursor)
 		fmt.Println("Class A of size", size)
 		return res, nil
 	}
@@ -68,31 +66,23 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		*cursor += 2
 		b = data[*cursor]
 
-		size := getElementSize(data, *cursor)
-		*cursor += size
-
+		size := getElementSize(data, cursor)
 		fmt.Println("Class B of size", size)
 		return res, nil
-
 	}
 	if ((b & 0x20) >> 5) == 1 {
 		*cursor += 3
 		b = data[*cursor]
 
-		size := getElementSize(data, *cursor)
-		*cursor += size
-
+		size := getElementSize(data, cursor)
 		fmt.Println("Class C of size", size)
 		return res, nil
-
 	}
 	if ((b & 0x10) >> 4) == 1 {
 		*cursor += 4
 		b = data[*cursor]
 
-		size := getElementSize(data, *cursor)
-		*cursor += size
-
+		size := getElementSize(data, cursor)
 		fmt.Println("Class D of size", size)
 		return res, nil
 	}
@@ -100,32 +90,56 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 	return res, io.EOF
 }
 
-func getElementSize(data []byte, at uint64) uint64 {
-	b := data[at]
+func getElementSize(data []byte, at *uint64) uint64 {
+	b := data[*at]
 
 	if ((b & 0x80) >> 7) == 1 { // Size coded on 1 byte
-		return uint64(b & 0x7f)
+		v := uint64(b & 0x7f)
+
+		*at++
+		return v
 	}
 	if ((b & 0x40) >> 6) == 1 { // Size coded on 2 byte
-		return uint64(pack16([]byte{0x3f & b, data[at+1]}))
+		v := uint64(pack16([]byte{0x3f & b, data[*at+1]}))
+
+		*at += 2
+		return v
 	}
 	if ((b & 0x20) >> 5) == 1 { // Size coded on 3 byte
-		return uint64(pack24([]byte{0x1f & b, data[at+1], data[at+2]}))
+		v := uint64(pack24([]byte{0x1f & b, data[*at+1], data[*at+2]}))
+
+		*at += 3
+		return v
 	}
 	if ((b & 0x10) >> 4) == 1 { // Size coded on 4 byte
-		return uint64(pack32([]byte{0xf & b, data[at+1], data[at+2], data[at+3]}))
+		v := uint64(pack32([]byte{0xf & b, data[*at+1], data[*at+2], data[*at+3]}))
+
+		*at += 4
+		return v
 	}
 	if ((b & 0x8) >> 3) == 1 { // Size coded on 5 byte
-		return uint64(pack40([]byte{0x7 & b, data[at+1], data[at+2], data[at+3], data[at+4]}))
+		v := uint64(pack40([]byte{0x7 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4]}))
+
+		*at += 5
+		return v
 	}
 	if ((b & 0x4) >> 2) == 1 { // Size coded on 6 byte
-		return uint64(pack48([]byte{0x3 & b, data[at+1], data[at+2], data[at+3], data[at+4], data[at+5]}))
+		v := uint64(pack48([]byte{0x3 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5]}))
+
+		*at += 6
+		return v
 	}
 	if ((b & 0x2) >> 1) == 1 { // Size coded on 7 byte
-		return uint64(pack56([]byte{0x1 & b, data[at+1], data[at+2], data[at+3], data[at+4], data[at+5], data[at+6]}))
+		v := uint64(pack56([]byte{0x1 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5], data[*at+6]}))
+
+		*at += 7
+		return v
 	}
 	if ((b & 0x1) >> 0) == 1 { // Size coded on 8 byte
-		return uint64(pack64([]byte{0x0 & b, data[at+1], data[at+2], data[at+3], data[at+4], data[at+5], data[at+6], data[at+7]}))
+		v := uint64(pack64([]byte{0x0 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5], data[*at+6], data[*at+7]}))
+
+		*at += 8
+		return v
 	}
 
 	return 0
