@@ -42,6 +42,8 @@ func Parse(filename string) error {
 	var levelEnd uint64 = 0
 
 	for cursor < uint64(len(data)) {
+		index := cursor
+
 		el, err := getNextElement(data, &cursor)
 		if err != nil {
 			fmt.Printf("Finished at index %d (value 0x%x): %s\n", cursor, data[cursor], err)
@@ -58,9 +60,12 @@ func Parse(filename string) error {
 		if el.Type == TypeMasterElement {
 			level++
 			levelEnd = cursor + el.Size
+		} else if el.ID == ElementUnknown {
+			cursor += el.Size
 		}
 
-		fmt.Printf("%d: %s (0x%d) of size %d - Value: %v\n", el.Level, GetElementName(el.ID), el.ID, el.Size, el.Data)
+		fmt.Printf("%d: %d: %s (0x%x) of size %d\n", el.Level, index, GetElementName(el.ID), el.ID, el.Size)
+
 		i++
 	}
 
@@ -120,6 +125,15 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		case ElementDocTypeReadVersion:
 			res.Type = TypeUint
 			break
+		case ElementSeek:
+			res.Type = TypeMasterElement
+			break
+		case ElementSeekID:
+			res.Type = TypeBinary
+			break
+		case ElementSeekPosition:
+			res.Type = TypeUint
+			break
 		}
 
 		d, err := getElementData(size, data, cursor)
@@ -132,7 +146,7 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		res.Size = size
 		return res, nil
 	}
-	if ((b & 0x20) >> 5) == 1 { // Class C ID (on 4 bytes)
+	if ((b & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
 		id, err := getElementID(3, data, cursor)
 
 		switch id {
@@ -155,6 +169,9 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 			res.Type = TypeMasterElement
 			break
 		case ElementSegment:
+			res.Type = TypeMasterElement
+			break
+		case ElementSeekHead:
 			res.Type = TypeMasterElement
 			break
 		}
@@ -203,57 +220,53 @@ func getElementID(class uint8, data []byte, at *uint64) (uint32, error) {
 
 func getElementSize(data []byte, at *uint64) (uint64, error) {
 	b := data[*at]
+	length := 0
+	mask := byte(0)
 
-	if ((b & 0x80) >> 7) == 1 { // Size coded on 1 byte
-		v := uint64(b & 0x7f)
+	if b >= 0x80 {
+		length = 1
+		mask = 0x7f
+	} else if b >= 0x40 {
+		length = 2
+		mask = 0x3f
+	} else if b >= 0x20 {
+		length = 3
+		mask = 0x1f
+	} else if b >= 0x10 {
+		length = 4
+		mask = 0xf
+	} else if b >= 0x8 {
+		length = 5
+		mask = 0x7
+	} else if b >= 0x4 {
+		length = 6
+		mask = 0x3
+	} else if b >= 0x2 {
+		length = 7
+		mask = 0x1
+	} else if b >= 0x1 {
+		length = 8
+		mask = 0x0
+	} else {
+		return 0, fmt.Errorf("Invalid size format")
+	}
+
+	var v uint64 = 0
+	var s = *at
+	for i, l := *at, uint64(length); i < s+l; i++ {
+		bb := data[i]
+
+		if i == s {
+			bb &= mask
+		}
+
+		v <<= 8
+		v += uint64(bb)
 
 		*at++
-		return v, nil
-	}
-	if ((b & 0x40) >> 6) == 1 { // Size coded on 2 byte
-		v := uint64(pack16([]byte{0x3f & b, data[*at+1]}))
-
-		*at += 2
-		return v, nil
-	}
-	if ((b & 0x20) >> 5) == 1 { // Size coded on 3 byte
-		v := uint64(pack24([]byte{0x1f & b, data[*at+1], data[*at+2]}))
-
-		*at += 3
-		return v, nil
-	}
-	if ((b & 0x10) >> 4) == 1 { // Size coded on 4 byte
-		v := uint64(pack32([]byte{0xf & b, data[*at+1], data[*at+2], data[*at+3]}))
-
-		*at += 4
-		return v, nil
-	}
-	if ((b & 0x8) >> 3) == 1 { // Size coded on 5 byte
-		v := uint64(pack40([]byte{0x7 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4]}))
-
-		*at += 5
-		return v, nil
-	}
-	if ((b & 0x4) >> 2) == 1 { // Size coded on 6 byte
-		v := uint64(pack48([]byte{0x3 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5]}))
-
-		*at += 6
-		return v, nil
-	}
-	if ((b & 0x2) >> 1) == 1 { // Size coded on 7 byte
-		v := uint64(pack56([]byte{0x1 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5], data[*at+6]}))
-
-		*at += 7
-		return v, nil
-	}
-	if ((b & 0x1) >> 0) == 1 { // Size coded on 8 byte
-		v := uint64(pack64([]byte{0x0 & b, data[*at+1], data[*at+2], data[*at+3], data[*at+4], data[*at+5], data[*at+6], data[*at+7]}))
-
-		*at += 8
-		return v, nil
 	}
 
-	return 0, fmt.Errorf("Invalid size format")
+	return v, nil
 }
 
 func getElementData(size uint64, b []byte, at *uint64) ([]byte, error) {
