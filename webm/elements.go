@@ -41,6 +41,50 @@ const (
 	ElementBlockDuration   uint32 = 0x9b
 	ElementReferenceBlock  uint32 = 0xfb
 	ElementDiscardPadding  uint32 = 0x75a2
+
+	ElementTracks                  uint32 = 0x1654ae6b
+	ElementTrackEntry              uint32 = 0xae
+	ElementTrackNumber             uint32 = 0xd7
+	ElementTrackUID                uint32 = 0x73c5
+	ElementTrackType               uint32 = 0x83
+	ElementFlagEnabled             uint32 = 0xb9
+	ElementFlagDefault             uint32 = 0x88
+	ElementFlagForced              uint32 = 0x55aa
+	ElementFlagLacing              uint32 = 0x9c
+	ElementDefaultDuration         uint32 = 0x23e383
+	ElementName                    uint32 = 0x536e
+	ElementLanguage                uint32 = 0x22b59c
+	ElementCodecID                 uint32 = 0x86
+	ElementCodecPrivate            uint32 = 0x63a2
+	ElementCodecName               uint32 = 0x258688
+	ElementCodecDelay              uint32 = 0x56aa
+	ElementSeekPreRoll             uint32 = 0x56bb
+	ElementVideo                   uint32 = 0xe0
+	ElementFlagInterlaced          uint32 = 0x9a
+	ElementStereoMode              uint32 = 0x53b8
+	ElementAlphaMode               uint32 = 0x53c0
+	ElementPixelWidth              uint32 = 0xb0
+	ElementPixelHeight             uint32 = 0xba
+	ElementPixelCropBottom         uint32 = 0x54aa
+	ElementPixelCropTop            uint32 = 0x54bb
+	ElementPixelCropLeft           uint32 = 0x54cc
+	ElementPixelCropRight          uint32 = 0x54dd
+	ElementDisplayWidth            uint32 = 0x54b0
+	ElementDisplayHeight           uint32 = 0x54ba
+	ElementDisplayUint             uint32 = 0x54b2
+	ElementAspectRatioType         uint32 = 0x54b3
+	ElementAudio                   uint32 = 0xe1
+	ElementSamplingFrequency       uint32 = 0xb5
+	ElementOutputSamplingFrequency uint32 = 0x78b5
+	ElementChannels                uint32 = 0x9f
+	ElementBitDepth                uint32 = 0x6264
+	ElementContentEncoding         uint32 = 0x6240
+	ElementContentEncodingOrder    uint32 = 0x5031
+	ElementContentEncodingScope    uint32 = 0x5032
+	ElementContentEncodingType     uint32 = 0x5033
+	ElementContentEncryption       uint32 = 0x5035
+	ElementContentEncAlgo          uint32 = 0x47e1
+	ElementContentEncKeyID         uint32 = 0x47e2
 )
 
 func GetElementName(id uint32) string {
@@ -117,6 +161,93 @@ func GetElementName(id uint32) string {
 		return "ReferenceBlock"
 	case ElementDiscardPadding:
 		return "DiscardPadding"
+
+	case ElementTracks:
+		return "ElementTracks"
+	case ElementTrackEntry:
+		return "ElementTrackEntry"
+	case ElementTrackNumber:
+		return "ElementTrackNumber"
+	case ElementTrackUID:
+		return "ElementTrackUID"
+	case ElementTrackType:
+		return "ElementTrackType"
+	case ElementFlagEnabled:
+		return "ElementFlagEnabled"
+	case ElementFlagDefault:
+		return "ElementFlagDefault"
+	case ElementFlagForced:
+		return "ElementFlagForced"
+	case ElementFlagLacing:
+		return "ElementFlagLacing"
+	case ElementDefaultDuration:
+		return "ElementDefaultDuration"
+	case ElementName:
+		return "ElementName"
+	case ElementLanguage:
+		return "ElementLanguage"
+	case ElementCodecID:
+		return "ElementCodecID"
+	case ElementCodecPrivate:
+		return "ElementCodecPrivate"
+	case ElementCodecName:
+		return "ElementCodecName"
+	case ElementCodecDelay:
+		return "ElementCodecDelay"
+	case ElementSeekPreRoll:
+		return "ElementSeekPreRoll"
+	case ElementVideo:
+		return "ElementVideo"
+	case ElementFlagInterlaced:
+		return "ElementFlagInterlaced"
+	case ElementStereoMode:
+		return "ElementStereoMode"
+	case ElementAlphaMode:
+		return "ElementAlphaMode"
+	case ElementPixelWidth:
+		return "ElementPixelWidth"
+	case ElementPixelHeight:
+		return "ElementPixelHeight"
+	case ElementPixelCropBottom:
+		return "ElementPixelCropBottom"
+	case ElementPixelCropTop:
+		return "ElementPixelCropTop"
+	case ElementPixelCropLeft:
+		return "ElementPixelCropLeft"
+	case ElementPixelCropRight:
+		return "ElementPixelCropRight"
+	case ElementDisplayWidth:
+		return "ElementDisplayWidth"
+	case ElementDisplayHeight:
+		return "ElementDisplayHeight"
+	case ElementDisplayUint:
+		return "ElementDisplayUint"
+	case ElementAspectRatioType:
+		return "ElementAspectRatioType"
+	case ElementAudio:
+		return "ElementAudio"
+	case ElementSamplingFrequency:
+		return "ElementSamplingFrequency"
+	case ElementOutputSamplingFrequency:
+		return "ElementOutputSamplingFrequency"
+	case ElementChannels:
+		return "ElementChannels"
+	case ElementBitDepth:
+		return "ElementBitDepth"
+	case ElementContentEncoding:
+		return "ElementContentEncoding"
+	case ElementContentEncodingOrder:
+		return "ElementContentEncodingOrder"
+	case ElementContentEncodingScope:
+		return "ElementContentEncodingScope"
+	case ElementContentEncodingType:
+		return "ElementContentEncodingType"
+	case ElementContentEncryption:
+		return "ElementContentEncryption"
+	case ElementContentEncAlgo:
+		return "ElementContentEncAlgo"
+	case ElementContentEncKeyID:
+		return "ElementContentEncKeyID"
 
 	case ElementUnknown:
 		return "Unknown"
