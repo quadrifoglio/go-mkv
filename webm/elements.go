@@ -19,6 +19,28 @@ const (
 	ElementSeek         uint32 = 0x4dbb
 	ElementSeekID       uint32 = 0x53ab
 	ElementSeekPosition uint32 = 0x53ac
+
+	ElementInfo          uint32 = 0x1549a966
+	ElementTimecodeScale uint32 = 0x2ad7b1
+	ElementDuration      uint32 = 0x4489
+	ElementDateUTC       uint32 = 0x4461
+	ElementTitle         uint32 = 0x7ba9
+	ElementMuxingApp     uint32 = 0x4d80
+	ElementWritingApp    uint32 = 0x5741
+
+	ElementCluster         uint32 = 0x1f43b675
+	ElementTimecode        uint32 = 0xe7
+	ElementPrevSize        uint32 = 0xab
+	ElementSimpleBlock     uint32 = 0xa3
+	ElementBlockGroup      uint32 = 0xa0
+	ElementBlock           uint32 = 0xa1
+	ElementBlockAdditions  uint32 = 0x75a1
+	ElementBlockMore       uint32 = 0xa6
+	ElementBlockAddID      uint32 = 0xee
+	ElementBlockAdditional uint32 = 0xa5
+	ElementBlockDuration   uint32 = 0x9b
+	ElementReferenceBlock  uint32 = 0xfb
+	ElementDiscardPadding  uint32 = 0x75a2
 )
 
 func GetElementName(id uint32) string {
@@ -39,10 +61,12 @@ func GetElementName(id uint32) string {
 		return "DocTypeVersion"
 	case ElementDocTypeReadVersion:
 		return "DocTypeReadVersion"
+
 	case ElementVoid:
 		return "Void"
 	case ElementSegment:
 		return "Segment"
+
 	case ElementSeekHead:
 		return "SeekHead"
 	case ElementSeek:
@@ -51,6 +75,49 @@ func GetElementName(id uint32) string {
 		return "SeekID"
 	case ElementSeekPosition:
 		return "SeekPosition"
+
+	case ElementInfo:
+		return "Info"
+	case ElementTimecodeScale:
+		return "TimecodeScale"
+	case ElementDuration:
+		return "Duration"
+	case ElementDateUTC:
+		return "DateUTC"
+	case ElementTitle:
+		return "Title"
+	case ElementMuxingApp:
+		return "MuxingApp"
+	case ElementWritingApp:
+		return "WritingApp"
+
+	case ElementCluster:
+		return "Cluster"
+	case ElementTimecode:
+		return "Timecode"
+	case ElementPrevSize:
+		return "PrevSize"
+	case ElementSimpleBlock:
+		return "SimpleBlock"
+	case ElementBlockGroup:
+		return "BlockGroup"
+	case ElementBlock:
+		return "Block"
+	case ElementBlockAdditions:
+		return "BlockAdditions"
+	case ElementBlockMore:
+		return "BlockMore"
+	case ElementBlockAddID:
+		return "BlockAddID"
+	case ElementBlockAdditional:
+		return "BlockAdditional"
+	case ElementBlockDuration:
+		return "BlockDuration"
+	case ElementReferenceBlock:
+		return "ReferenceBlock"
+	case ElementDiscardPadding:
+		return "DiscardPadding"
+
 	case ElementUnknown:
 		return "Unknown"
 	default:

@@ -15,6 +15,7 @@ type Document struct {
 	Data   []byte
 	Length uint64
 	Cursor uint64
+	Stack  []Element
 }
 
 type Element struct {

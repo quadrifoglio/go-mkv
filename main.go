@@ -16,7 +16,7 @@ func main() {
 	fmt.Println(Name, "-", Version)
 
 	if len(os.Args) == 2 {
-		err := ebml.Parse(os.Args[1])
+		err := webm.Parse(os.Args[1])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		}

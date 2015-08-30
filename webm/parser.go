@@ -22,19 +22,13 @@ func Parse(filename string) error {
 	doc.Length = uint64(len(doc.Data))
 
 	for doc.Cursor < doc.Length {
-		index := doc.Cursor
-
 		el, err := getNextElement(&doc)
 		if err != nil {
 			fmt.Printf("Finished at index %d (value 0x%x): %s\n", doc.Cursor, doc.Data[doc.Cursor], err)
 			break
 		}
 
-		if el.ID == ElementUnknown {
-			doc.Cursor += el.Size
-		}
-
-		fmt.Printf("%d: %d: %s (0x%x) containing %d bytes\n", el.Level, index, GetElementName(el.ID), el.ID, el.Size)
+		fmt.Printf("%d: %s (0x%x) containing %d bytes\n", el.Level, GetElementName(el.ID), el.ID, el.Size)
 	}
 
 	return nil
@@ -49,8 +43,8 @@ func getNextElement(doc *Document) (Element, error) {
 	var b = doc.Data[doc.Cursor]
 
 	if ((b & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
-		t, err := getElementID(1, doc)
-		switch t {
+		id, err := getElementID(1, doc)
+		switch id {
 		}
 
 		size, err := getElementSize(doc)
@@ -58,7 +52,14 @@ func getNextElement(doc *Document) (Element, error) {
 			return res, err
 		}
 
+		d, err := getElementData(size, doc)
+		if err != nil {
+			return res, nil
+		}
+
+		res.ID = id
 		res.Size = size
+		res.Data = d
 		return res, nil
 	}
 	if ((b & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
@@ -126,8 +127,14 @@ func getNextElement(doc *Document) (Element, error) {
 			return res, err
 		}
 
+		d, err := getElementData(size, doc)
+		if err != nil {
+			return res, nil
+		}
+
 		res.ID = id
 		res.Size = size
+		res.Data = d
 		return res, nil
 	}
 	if ((b & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
