@@ -1,4 +1,4 @@
-package ebml
+package webm
 
 const (
 	ElementUnknown uint32 = 0x0

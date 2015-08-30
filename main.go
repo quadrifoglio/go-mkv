@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dreamvids/webm-info/ebml"
+	"github.com/dreamvids/webm-info/webm"
 )
 
 const (

@@ -1,4 +1,4 @@
-package ebml
+package webm
 
 import (
 	"fmt"
@@ -6,26 +6,9 @@ import (
 	"io/ioutil"
 )
 
-const (
-	TypeInt           = 0x0
-	TypeUint          = 0x1
-	TypeFloat         = 0x2
-	TypeString        = 0x3
-	TypeUnicode       = 0x4
-	TypeDate          = 0x5
-	TypeMasterElement = 0x6
-	TypeBinary        = 0x7
-)
-
-type Element struct {
-	ID    uint32
-	Level uint8
-	Type  uint8
-	Size  uint64
-	Data  []byte
-}
-
 func Parse(filename string) error {
+	var doc Document
+
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -35,70 +18,56 @@ func Parse(filename string) error {
 		return fmt.Errorf("Invalid WebM file: EBML root element not found")
 	}
 
-	var cursor uint64 = 0
-	var i int = 0
+	doc.Data = data
+	doc.Length = uint64(len(doc.Data))
 
-	var level = 0
-	var levelEnd uint64 = 0
+	for doc.Cursor < doc.Length {
+		index := doc.Cursor
 
-	for cursor < uint64(len(data)) {
-		index := cursor
-
-		el, err := getNextElement(data, &cursor)
+		el, err := getNextElement(&doc)
 		if err != nil {
-			fmt.Printf("Finished at index %d (value 0x%x): %s\n", cursor, data[cursor], err)
+			fmt.Printf("Finished at index %d (value 0x%x): %s\n", doc.Cursor, doc.Data[doc.Cursor], err)
 			break
 		}
 
-		if levelEnd != 0 && cursor == levelEnd {
-			level--
-			levelEnd = 0
+		if el.ID == ElementUnknown {
+			doc.Cursor += el.Size
 		}
 
-		el.Level = uint8(level)
-
-		if el.Type == TypeMasterElement {
-			level++
-			levelEnd = cursor + el.Size
-		} else if el.ID == ElementUnknown {
-			cursor += el.Size
-		}
-
-		fmt.Printf("%d: %d: %s (0x%x) of size %d\n", el.Level, index, GetElementName(el.ID), el.ID, el.Size)
-
-		i++
+		fmt.Printf("%d: %d: %s (0x%x) containing %d bytes\n", el.Level, index, GetElementName(el.ID), el.ID, el.Size)
 	}
 
 	return nil
 }
 
-func getNextElement(data []byte, cursor *uint64) (Element, error) {
+func getNextElement(doc *Document) (Element, error) {
 	var res Element
-	if *cursor >= uint64(len(data)) {
+	if doc.Cursor >= doc.Length {
 		return res, io.EOF
 	}
 
-	var b = data[*cursor]
+	var b = doc.Data[doc.Cursor]
 
 	if ((b & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
-		t, err := getElementID(1, data, cursor)
+		t, err := getElementID(1, doc)
 		switch t {
 		}
 
-		_, err = getElementSize(data, cursor)
+		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
 
+		res.Size = size
 		return res, nil
 	}
 	if ((b & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
-		id, err := getElementID(2, data, cursor)
+		id, err := getElementID(2, doc)
 		if err != nil {
 			return res, err
 		}
 
-		size, err := getElementSize(data, cursor)
+		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
@@ -136,7 +105,7 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 			break
 		}
 
-		d, err := getElementData(size, data, cursor)
+		d, err := getElementData(size, doc)
 		if err != nil {
 			return res, nil
 		}
@@ -147,12 +116,12 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		return res, nil
 	}
 	if ((b & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
-		id, err := getElementID(3, data, cursor)
+		id, err := getElementID(3, doc)
 
 		switch id {
 		}
 
-		size, err := getElementSize(data, cursor)
+		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
@@ -162,21 +131,24 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 		return res, nil
 	}
 	if ((b & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
-		id, err := getElementID(4, data, cursor)
+		id, err := getElementID(4, doc)
 
 		switch id {
 		case ElementEBML:
 			res.Type = TypeMasterElement
+			res.Multiple = false
 			break
 		case ElementSegment:
 			res.Type = TypeMasterElement
+			res.Multiple = true
 			break
 		case ElementSeekHead:
 			res.Type = TypeMasterElement
+			res.Multiple = true
 			break
 		}
 
-		size, err := getElementSize(data, cursor)
+		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
@@ -189,37 +161,37 @@ func getNextElement(data []byte, cursor *uint64) (Element, error) {
 	return res, fmt.Errorf("Failed to identify tag")
 }
 
-func getElementID(class uint8, data []byte, at *uint64) (uint32, error) {
+func getElementID(class uint8, doc *Document) (uint32, error) {
 	if class == 1 {
-		b := data[*at]
+		b := doc.Data[doc.Cursor]
 
-		*at++
+		doc.Cursor++
 		return uint32(b), nil
 	}
 	if class == 2 {
-		b := data[*at : *at+2]
+		b := doc.Data[doc.Cursor : doc.Cursor+2]
 
-		*at += 2
+		doc.Cursor += 2
 		return uint32(pack16(b)), nil
 	}
 	if class == 3 {
-		b := data[*at : *at+3]
+		b := doc.Data[doc.Cursor : doc.Cursor+3]
 
-		*at += 3
+		doc.Cursor += 3
 		return uint32(pack24(b)), nil
 	}
 	if class == 4 {
-		b := data[*at : *at+4]
+		b := doc.Data[doc.Cursor : doc.Cursor+4]
 
-		*at += 4
+		doc.Cursor += 4
 		return uint32(pack32(b)), nil
 	}
 
 	return 0, fmt.Errorf("Unknown element")
 }
 
-func getElementSize(data []byte, at *uint64) (uint64, error) {
-	b := data[*at]
+func getElementSize(doc *Document) (uint64, error) {
+	b := doc.Data[doc.Cursor]
 	length := 0
 	mask := byte(0)
 
@@ -252,9 +224,9 @@ func getElementSize(data []byte, at *uint64) (uint64, error) {
 	}
 
 	var v uint64 = 0
-	var s = *at
-	for i, l := *at, uint64(length); i < s+l; i++ {
-		bb := data[i]
+	var s = doc.Cursor
+	for i, l := doc.Cursor, uint64(length); i < s+l; i++ {
+		bb := doc.Data[i]
 
 		if i == s {
 			bb &= mask
@@ -263,14 +235,14 @@ func getElementSize(data []byte, at *uint64) (uint64, error) {
 		v <<= 8
 		v += uint64(bb)
 
-		*at++
+		doc.Cursor++
 	}
 
 	return v, nil
 }
 
-func getElementData(size uint64, b []byte, at *uint64) ([]byte, error) {
-	if uint64(len(b[*at:*at+size])) != size {
+func getElementData(size uint64, doc *Document) ([]byte, error) {
+	if uint64(len(doc.Data[doc.Cursor:doc.Cursor+size])) != size {
 		return nil, io.EOF
 	}
 
@@ -278,10 +250,10 @@ func getElementData(size uint64, b []byte, at *uint64) ([]byte, error) {
 	var buffer = make([]byte, size)
 
 	for i = 0; i < size; i++ {
-		buffer[i] = b[i]
+		buffer[i] = doc.Data[i]
 	}
 
-	*at += size
+	doc.Cursor += size
 	return buffer, nil
 }
 
