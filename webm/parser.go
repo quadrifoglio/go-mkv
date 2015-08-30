@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 )
 
-func Parse(filename string) error {
+func ParseFile(filename string) (Document, error) {
 	var doc Document
 
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return err
+		return doc, err
 	}
 
 	if pack32(data[0:4]) != ElementEBML {
-		return fmt.Errorf("Invalid WebM file: EBML root element not found")
+		return doc, fmt.Errorf("Invalid WebM file: EBML root element not found")
 	}
 
 	doc.Data = data
@@ -28,10 +28,47 @@ func Parse(filename string) error {
 			break
 		}
 
-		fmt.Printf("%d: %s (0x%x) containing %d bytes\n", el.Level, GetElementName(el.ID), el.ID, el.Size)
+		//fmt.Printf("%d: %s (0x%x) containing %d bytes\n", el.Level, GetElementName(el.ID), el.ID, el.Size)
+		doc.Elements = append(doc.Elements, el)
 	}
 
-	return nil
+	return doc, nil
+}
+
+func ReadHeader(doc *Document) ([]byte, error) {
+	for doc.Cursor < doc.Length {
+		if doc.Cursor+4 >= doc.Length {
+			return nil, io.EOF
+		}
+
+		if pack32(doc.Data[doc.Cursor:doc.Cursor+4]) == ElementCluster {
+			return doc.Data[0:doc.Cursor], nil
+		}
+
+		doc.Cursor++
+	}
+
+	return nil, fmt.Errorf("Invalid data")
+}
+
+func ReadBlock(doc *Document) ([]byte, error) {
+	for doc.Cursor < doc.Length {
+		el, err := getNextElement(doc)
+		if err != nil {
+			return nil, err
+		}
+
+		if el.ID == ElementBlock || el.ID == ElementSimpleBlock {
+			bytes, err := el.GetRawBytes()
+			if err != nil {
+				return nil, err
+			}
+
+			return bytes, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Invalid data")
 }
 
 func getNextElement(doc *Document) (Element, error) {
@@ -290,4 +327,14 @@ func pack56(b []byte) uint64 {
 
 func pack64(b []byte) uint64 {
 	return (uint64(b[0]) << 56) | (uint64(b[1]) << 48) | (uint64(b[2]) << 40) | (uint64(b[3]) << 32) | (uint64(b[4]) << 24) | (uint64(b[5]) << 16) | (uint64(b[6]) << 8) | (uint64(b[7]) << 0)
+}
+
+func unpack(n int, v uint64) []byte {
+	var bytes []byte
+
+	for i := uint(n); i > 0; i-- {
+		bytes = append(bytes, byte(v>>(8*i))&0xff)
+	}
+
+	return bytes
 }
