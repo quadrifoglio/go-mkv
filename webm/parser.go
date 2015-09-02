@@ -52,6 +52,10 @@ func ReadHeader(doc *Document) ([]byte, error) {
 }
 
 func ReadBlock(doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
+
 	for doc.Cursor < doc.Length {
 		el, err := getNextElement(doc)
 		if err != nil {
