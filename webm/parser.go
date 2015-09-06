@@ -51,6 +51,48 @@ func ReadHeader(doc *Document) ([]byte, error) {
 	return nil, fmt.Errorf("Invalid data")
 }
 
+func ReadUntilDataStart(doc *Document) ([]byte, error) {
+	for doc.Cursor < doc.Length {
+		if doc.Cursor+4 >= doc.Length {
+			fmt.Printf("mdr: cur %d len %d\n", doc.Cursor, doc.Length)
+			return nil, io.EOF
+		}
+
+		if pack32(doc.Data[doc.Cursor:doc.Cursor+4]) == ElementCluster {
+			getNextElement(doc)
+
+			i := 0
+			for {
+				idClass := uint64(getElementIDClass(uint32(doc.Data[doc.Cursor])))
+				elId, err := getElementID(uint8(idClass), doc)
+				if err != nil {
+					return nil, err
+				}
+
+				if elId == ElementSimpleBlock || elId == ElementBlock {
+					return doc.Data[0 : doc.Cursor-idClass], nil
+				}
+
+				size, err := getElementSize(doc)
+				if err != nil {
+					return nil, err
+				}
+
+				doc.Cursor += size
+				i++
+
+				if i >= 5 {
+					return nil, fmt.Errorf("Did not find begining of video data")
+				}
+			}
+		}
+
+		doc.Cursor++
+	}
+
+	return nil, fmt.Errorf("Invalid data")
+}
+
 func ReadBlock(doc *Document) ([]byte, error) {
 	if doc.Cursor >= doc.Length {
 		return nil, io.EOF
@@ -82,8 +124,9 @@ func getNextElement(doc *Document) (Element, error) {
 	}
 
 	var b = doc.Data[doc.Cursor]
+	var c = getElementIDClass(uint32(b))
 
-	if ((b & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
+	if c == 1 { // Class A ID (on 1 byte)
 		id, err := getElementID(1, doc)
 		switch id {
 		}
@@ -103,7 +146,7 @@ func getNextElement(doc *Document) (Element, error) {
 		res.Data = d
 		return res, nil
 	}
-	if ((b & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
+	if c == 2 { // Class B ID (on 2 byte)
 		id, err := getElementID(2, doc)
 		if err != nil {
 			return res, err
@@ -157,7 +200,7 @@ func getNextElement(doc *Document) (Element, error) {
 		res.Size = size
 		return res, nil
 	}
-	if ((b & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
+	if c == 3 { // Class C ID (on 3 bytes)
 		id, err := getElementID(3, doc)
 
 		switch id {
@@ -178,7 +221,7 @@ func getNextElement(doc *Document) (Element, error) {
 		res.Data = d
 		return res, nil
 	}
-	if ((b & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
+	if c == 4 { // Class D ID (on 4 bytes)
 		id, err := getElementID(4, doc)
 
 		switch id {
@@ -206,7 +249,7 @@ func getNextElement(doc *Document) (Element, error) {
 		return res, nil
 	}
 
-	return res, fmt.Errorf("Failed to identify tag")
+	return res, fmt.Errorf("Failed to identify element ID 0x%x (class %d)", b, c)
 }
 
 func getElementID(class uint8, doc *Document) (uint32, error) {
@@ -235,7 +278,7 @@ func getElementID(class uint8, doc *Document) (uint32, error) {
 		return uint32(pack32(b)), nil
 	}
 
-	return 0, fmt.Errorf("Unknown element")
+	return 0, fmt.Errorf("Unknown element (ID class %d)", class)
 }
 
 func getElementSize(doc *Document) (uint64, error) {
@@ -290,6 +333,9 @@ func getElementSize(doc *Document) (uint64, error) {
 }
 
 func getElementData(size uint64, doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
 	if uint64(len(doc.Data[doc.Cursor:doc.Cursor+size])) != size {
 		return nil, io.EOF
 	}
@@ -298,11 +344,29 @@ func getElementData(size uint64, doc *Document) ([]byte, error) {
 	var buffer = make([]byte, size)
 
 	for i = 0; i < size; i++ {
-		buffer[i] = doc.Data[i]
+		buffer[i] = doc.Data[doc.Cursor]
+		doc.Cursor++
 	}
 
-	doc.Cursor += size
+	//doc.Cursor += size
 	return buffer, nil
+}
+
+func getElementIDClass(id uint32) uint {
+	if ((id & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
+		return 1
+	}
+	if ((id & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
+		return 2
+	}
+	if ((id & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
+		return 3
+	}
+	if ((id & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
+		return 4
+	} else {
+		return 0
+	}
 }
 
 func pack16(b []byte) uint16 {

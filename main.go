@@ -24,14 +24,12 @@ func main() {
 		}
 
 		doc.Cursor = 0
-		bytes, err := webm.ReadHeader(&doc)
+		data, err := webm.ReadUntilDataStart(&doc)
 		if err != nil {
-			fmt.Println(err)
-			return
+			fmt.Println("Can not get cluster data:", err)
 		}
 
-		ioutil.WriteFile("mdr.webm", bytes, os.ModePerm)
-		fmt.Println("Header size:", len(bytes))
+		ioutil.WriteFile("mdr.webm", data, os.ModeAppend)
 
 	} else {
 		fmt.Fprintf(os.Stderr, "Usage: webm-info <file>\n")
