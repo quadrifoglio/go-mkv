@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/dreamvids/webm-info/webm"
@@ -24,13 +24,43 @@ func main() {
 		}
 
 		doc.Cursor = 0
-		data, err := webm.ReadUntilDataStart(&doc)
+		f, _ := os.Create("mdr.webm")
+
+		header, err := webm.ReadHeader(&doc)
 		if err != nil {
-			fmt.Println("Can not get cluster data:", err)
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+			return
 		}
 
-		ioutil.WriteFile("mdr.webm", data, os.ModeAppend)
+		f.Write(header)
 
+		nClu := 0
+		nBl := 0
+		for {
+			clusterData, err := webm.ReadClusterData(&doc)
+			if err != nil {
+				fmt.Println("Cluster %d error:", nClu, err)
+				break
+			}
+
+			f.Write(clusterData)
+
+			for {
+				block, err := webm.ReadBlock(&doc)
+				f.Write(block)
+				fmt.Printf("Wrote %d for block %d\n", len(block), nBl)
+				nBl++
+
+				if err != nil && err == io.EOF {
+					fmt.Fprintf(os.Stderr, "Block %d EOF\n", nBl)
+					return
+				} else if err != nil {
+					fmt.Fprintf(os.Stderr, "Block %d error: %s\n", nBl, err)
+				}
+			}
+
+			nClu++
+		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Usage: webm-info <file>\n")
 	}

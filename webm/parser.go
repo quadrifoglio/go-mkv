@@ -51,7 +51,7 @@ func ReadHeader(doc *Document) ([]byte, error) {
 	return nil, fmt.Errorf("Invalid data")
 }
 
-func ReadUntilDataStart(doc *Document) ([]byte, error) {
+func ReadClusterData(doc *Document) ([]byte, error) {
 	for doc.Cursor < doc.Length {
 		if doc.Cursor+4 >= doc.Length {
 			fmt.Printf("mdr: cur %d len %d\n", doc.Cursor, doc.Length)
@@ -59,6 +59,8 @@ func ReadUntilDataStart(doc *Document) ([]byte, error) {
 		}
 
 		if pack32(doc.Data[doc.Cursor:doc.Cursor+4]) == ElementCluster {
+
+			start := doc.Cursor
 			getNextElement(doc)
 
 			i := 0
@@ -70,7 +72,10 @@ func ReadUntilDataStart(doc *Document) ([]byte, error) {
 				}
 
 				if elId == ElementSimpleBlock || elId == ElementBlock {
-					return doc.Data[0 : doc.Cursor-idClass], nil
+					end := doc.Cursor - idClass
+					doc.Cursor -= idClass
+
+					return doc.Data[start:end], nil
 				}
 
 				size, err := getElementSize(doc)
