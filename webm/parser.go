@@ -1,9 +1,14 @@
 package webm
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+)
+
+var (
+	EndOfBlock = errors.New("EOB")
 )
 
 func ParseFile(filename string) (Document, error) {
@@ -28,7 +33,7 @@ func ParseFile(filename string) (Document, error) {
 			break
 		}
 
-		//fmt.Printf("%d: %s (0x%x) containing %d bytes\n", el.Level, GetElementName(el.ID), el.ID, el.Size)
+		fmt.Printf("%s (0x%x) containing %d bytes (total: %d)\n", GetElementName(el.ID), el.ID, el.Size, el.GetFullSize())
 		doc.Elements = append(doc.Elements, el)
 	}
 
@@ -104,18 +109,17 @@ func ReadBlock(doc *Document) ([]byte, error) {
 	}
 
 	for doc.Cursor < doc.Length {
+		start := doc.Cursor
 		el, err := getNextElement(doc)
 		if err != nil {
 			return nil, err
 		}
 
 		if el.ID == ElementBlock || el.ID == ElementSimpleBlock {
-			bytes, err := el.GetRawBytes()
-			if err != nil {
-				return nil, err
-			}
-
-			return bytes, nil
+			return doc.Data[start:doc.Cursor], nil
+		} else if el.ID == ElementCluster {
+			doc.Cursor = start
+			return nil, EndOfBlock
 		}
 	}
 
@@ -287,6 +291,10 @@ func getElementID(class uint8, doc *Document) (uint32, error) {
 }
 
 func getElementSize(doc *Document) (uint64, error) {
+	if doc.Cursor >= doc.Length {
+		return 0, io.EOF
+	}
+
 	b := doc.Data[doc.Cursor]
 	length := 0
 	mask := byte(0)
@@ -319,6 +327,10 @@ func getElementSize(doc *Document) (uint64, error) {
 		return 0, fmt.Errorf("Invalid size format")
 	}
 
+	if doc.Cursor+uint64(length) >= doc.Length {
+		return 0, io.EOF
+	}
+
 	var v uint64 = 0
 	var s = doc.Cursor
 	for i, l := doc.Cursor, uint64(length); i < s+l; i++ {
@@ -338,7 +350,7 @@ func getElementSize(doc *Document) (uint64, error) {
 }
 
 func getElementData(size uint64, doc *Document) ([]byte, error) {
-	if doc.Cursor >= doc.Length {
+	if doc.Cursor+size >= doc.Length {
 		return nil, io.EOF
 	}
 	if uint64(len(doc.Data[doc.Cursor:doc.Cursor+size])) != size {
@@ -369,6 +381,28 @@ func getElementIDClass(id uint32) uint {
 	}
 	if ((id & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
 		return 4
+	} else {
+		return 0
+	}
+}
+
+func getElementSizeClass(size uint64) uint {
+	if size >= 0x80 {
+		return 1
+	} else if size >= 0x40 {
+		return 2
+	} else if size >= 0x20 {
+		return 3
+	} else if size >= 0x10 {
+		return 4
+	} else if size >= 0x8 {
+		return 5
+	} else if size >= 0x4 {
+		return 6
+	} else if size >= 0x2 {
+		return 7
+	} else if size >= 0x1 {
+		return 8
 	} else {
 		return 0
 	}

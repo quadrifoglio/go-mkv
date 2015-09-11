@@ -48,7 +48,7 @@ func main() {
 			for {
 				block, err := webm.ReadBlock(&doc)
 				f.Write(block)
-				fmt.Printf("Wrote %d for block %d\n", len(block), nBl)
+				//fmt.Printf("Wrote %d for block %d\n", len(block), nBl)
 				nBl++
 
 				if err != nil && err == io.EOF {

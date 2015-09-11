@@ -1,10 +1,5 @@
 package webm
 
-import (
-	"fmt"
-	"math"
-)
-
 const (
 	TypeInt           = 0x0
 	TypeUint          = 0x1
@@ -32,41 +27,9 @@ type Element struct {
 	Data     []byte
 }
 
-func (e *Element) GetRawBytes() ([]byte, error) {
-	var bytes []byte
+func (e *Element) GetFullSize() uint64 {
+	clID := getElementIDClass(e.ID)
+	clSize := getElementSizeClass(e.Size)
 
-	if e.ID <= uint32(math.Pow(2, 7)-2) {
-		bytes = append(bytes, byte(e.ID))
-	} else if e.ID <= uint32(math.Pow(2, 14)-2) {
-		bytes = append(bytes, []byte(unpack(2, uint64(e.ID)))...)
-	} else if e.ID <= uint32(math.Pow(2, 21)-2) {
-		bytes = append(bytes, []byte(unpack(3, uint64(e.ID)))...)
-	} else if e.ID <= uint32(math.Pow(2, 28)-2) {
-		bytes = append(bytes, []byte(unpack(4, uint64(e.ID)))...)
-	} else {
-		return nil, fmt.Errorf("Invalid element (invalid id)")
-	}
-
-	if e.Size <= uint64(math.Pow(2, 7)-2) {
-		bytes = append(bytes, byte(e.Size))
-	} else if e.Size <= uint64(math.Pow(2, 14)-2) {
-		bytes = append(bytes, []byte(unpack(2, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 21)-2) {
-		bytes = append(bytes, []byte(unpack(3, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 28)-2) {
-		bytes = append(bytes, []byte(unpack(4, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 35)-2) {
-		bytes = append(bytes, []byte(unpack(5, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 42)-2) {
-		bytes = append(bytes, []byte(unpack(6, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 49)-2) {
-		bytes = append(bytes, []byte(unpack(7, uint64(e.Size)))...)
-	} else if e.Size <= uint64(math.Pow(2, 56)-2) {
-		bytes = append(bytes, []byte(unpack(8, uint64(e.Size)))...)
-	} else {
-		return nil, fmt.Errorf("Invalid element (invalid size)")
-	}
-
-	bytes = append(bytes, e.Data...)
-	return bytes, nil
+	return e.Size + uint64(clID) + uint64(clSize)
 }
