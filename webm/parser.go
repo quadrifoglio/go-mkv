@@ -57,9 +57,12 @@ func ReadHeader(doc *Document) ([]byte, error) {
 }
 
 func ReadClusterData(doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
+
 	for doc.Cursor < doc.Length {
 		if doc.Cursor+4 >= doc.Length {
-			fmt.Printf("mdr: cur %d len %d\n", doc.Cursor, doc.Length)
 			return nil, io.EOF
 		}
 
@@ -103,6 +106,27 @@ func ReadClusterData(doc *Document) ([]byte, error) {
 	return nil, fmt.Errorf("Invalid data")
 }
 
+func ReadCluster(doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
+
+	for doc.Cursor < doc.Length {
+		start := doc.Cursor
+		el, err := getNextElement(doc)
+		if err != nil {
+			return nil, err
+		}
+
+		if el.ID == ElementCluster {
+			//fmt.Println("Size:", el.Size, "Cursor:", doc.Cursor, "Data:", el.Data)
+			return doc.Data[start:doc.Cursor], nil
+		}
+	}
+
+	return nil, fmt.Errorf("Invalid data")
+}
+
 func ReadBlock(doc *Document) ([]byte, error) {
 	if doc.Cursor >= doc.Length {
 		return nil, io.EOF
@@ -137,21 +161,24 @@ func getNextElement(doc *Document) (Element, error) {
 
 	if c == 1 { // Class A ID (on 1 byte)
 		id, err := getElementID(1, doc)
-		switch id {
+		if err != nil {
+			return res, err
 		}
+
+		res.ID = id
 
 		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
 
+		res.Size = size
+
 		d, err := getElementData(size, doc)
 		if err != nil {
 			return res, nil
 		}
 
-		res.ID = id
-		res.Size = size
 		res.Data = d
 		return res, nil
 	}
@@ -161,10 +188,14 @@ func getNextElement(doc *Document) (Element, error) {
 			return res, err
 		}
 
+		res.ID = id
+
 		size, err := getElementSize(doc)
 		if err != nil {
 			return res, err
 		}
+
+		res.Size = size
 
 		switch id {
 		case ElementEBMLVersion:
@@ -201,16 +232,19 @@ func getNextElement(doc *Document) (Element, error) {
 
 		d, err := getElementData(size, doc)
 		if err != nil {
-			return res, nil
+			return res, err
 		}
 
-		res.ID = id
 		res.Data = d
-		res.Size = size
 		return res, nil
 	}
 	if c == 3 { // Class C ID (on 3 bytes)
 		id, err := getElementID(3, doc)
+		if err != nil {
+			return res, err
+		}
+
+		res.ID = id
 
 		switch id {
 		}
@@ -220,18 +254,23 @@ func getNextElement(doc *Document) (Element, error) {
 			return res, err
 		}
 
+		res.Size = size
+
 		d, err := getElementData(size, doc)
 		if err != nil {
-			return res, nil
+			return res, err
 		}
 
-		res.ID = id
-		res.Size = size
 		res.Data = d
 		return res, nil
 	}
 	if c == 4 { // Class D ID (on 4 bytes)
 		id, err := getElementID(4, doc)
+		if err != nil {
+			return res, err
+		}
+
+		res.ID = id
 
 		switch id {
 		case ElementEBML:
@@ -253,8 +292,14 @@ func getNextElement(doc *Document) (Element, error) {
 			return res, err
 		}
 
-		res.ID = id
 		res.Size = size
+
+		d, err := getElementData(size, doc)
+		if err != nil {
+			return res, err
+		}
+
+		res.Data = d
 		return res, nil
 	}
 
