@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 
-	"github.com/dreamvids/webm-info/webm"
+	"github.com/dreamvids/go-webm/webm"
 )
 
 const (
-	Name    = "WebM Info Parser"
+	Name    = "go-webm info parser"
 	Version = "0.1"
 )
 
@@ -34,32 +33,14 @@ func main() {
 
 		f.Write(header)
 
-		nClu := 0
-		nBl := 0
 		for {
-			clusterData, err := webm.ReadClusterData(&doc)
+			clu, err := webm.ReadCluster(&doc)
 			if err != nil {
-				fmt.Println("Cluster %d error:", nClu, err)
+				fmt.Printf("Cluster error: %s\n", err)
 				break
 			}
 
-			f.Write(clusterData)
-
-			for {
-				block, err := webm.ReadBlock(&doc)
-				f.Write(block)
-				//fmt.Printf("Wrote %d for block %d\n", len(block), nBl)
-				nBl++
-
-				if err != nil && err == io.EOF {
-					fmt.Fprintf(os.Stderr, "Block %d EOF\n", nBl)
-					return
-				} else if err != nil {
-					fmt.Fprintf(os.Stderr, "Block %d error: %s\n", nBl, err)
-				}
-			}
-
-			nClu++
+			f.Write(clu)
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Usage: webm-info <file>\n")

@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	NoHeader   = errors.New("No header")
+	NoCluster  = errors.New("No cluster")
 	EndOfBlock = errors.New("EOB")
 )
 
@@ -53,57 +55,7 @@ func ReadHeader(doc *Document) ([]byte, error) {
 		doc.Cursor++
 	}
 
-	return nil, fmt.Errorf("Invalid data")
-}
-
-func ReadClusterData(doc *Document) ([]byte, error) {
-	if doc.Cursor >= doc.Length {
-		return nil, io.EOF
-	}
-
-	for doc.Cursor < doc.Length {
-		if doc.Cursor+4 >= doc.Length {
-			return nil, io.EOF
-		}
-
-		if pack32(doc.Data[doc.Cursor:doc.Cursor+4]) == ElementCluster {
-
-			start := doc.Cursor
-			getNextElement(doc)
-
-			i := 0
-			for {
-				idClass := uint64(getElementIDClass(uint32(doc.Data[doc.Cursor])))
-				elId, err := getElementID(uint8(idClass), doc)
-				if err != nil {
-					return nil, err
-				}
-
-				if elId == ElementSimpleBlock || elId == ElementBlock {
-					end := doc.Cursor - idClass
-					doc.Cursor -= idClass
-
-					return doc.Data[start:end], nil
-				}
-
-				size, err := getElementSize(doc)
-				if err != nil {
-					return nil, err
-				}
-
-				doc.Cursor += size
-				i++
-
-				if i >= 5 {
-					return nil, fmt.Errorf("Did not find begining of video data")
-				}
-			}
-		}
-
-		doc.Cursor++
-	}
-
-	return nil, fmt.Errorf("Invalid data")
+	return nil, NoHeader
 }
 
 func ReadCluster(doc *Document) ([]byte, error) {
@@ -119,12 +71,11 @@ func ReadCluster(doc *Document) ([]byte, error) {
 		}
 
 		if el.ID == ElementCluster {
-			//fmt.Println("Size:", el.Size, "Cursor:", doc.Cursor, "Data:", el.Data)
 			return doc.Data[start:doc.Cursor], nil
 		}
 	}
 
-	return nil, fmt.Errorf("Invalid data")
+	return nil, NoCluster
 }
 
 func ReadBlock(doc *Document) ([]byte, error) {
@@ -285,6 +236,10 @@ func getNextElement(doc *Document) (Element, error) {
 			res.Type = TypeMasterElement
 			res.Multiple = true
 			break
+		case ElementCluster:
+			res.Type = TypeMasterElement
+			res.Multiple = true
+			break
 		}
 
 		size, err := getElementSize(doc)
@@ -395,7 +350,7 @@ func getElementSize(doc *Document) (uint64, error) {
 }
 
 func getElementData(size uint64, doc *Document) ([]byte, error) {
-	if doc.Cursor+size >= doc.Length {
+	if doc.Cursor+size > doc.Length {
 		return nil, io.EOF
 	}
 	if uint64(len(doc.Data[doc.Cursor:doc.Cursor+size])) != size {
