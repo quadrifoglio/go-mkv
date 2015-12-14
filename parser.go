@@ -28,6 +28,8 @@ func (doc *Document) GetAllElements() []Element {
 		if err == ErrUnexpectedEOF || err == io.EOF {
 			break
 		} else if err != nil || GetElementName(el.ID) == "Unknown" {
+			// TODO: Skip unknown elements properly
+			// This is causing incorrect element showing up
 			doc.Cursor++
 			continue
 		}
