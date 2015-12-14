@@ -1,6 +1,16 @@
 package webm
 
 const (
+	ElementTypeUnknown uint8 = 0x0
+	ElementTypeMaster  uint8 = 0x1
+	ElementTypeUint    uint8 = 0x2
+	ElementTypeInt     uint8 = 0x3
+	ElementTypeString  uint8 = 0x4
+	ElementTypeUnicode uint8 = 0x5
+	ElementTypeBinary  uint8 = 0x6
+	ElementTypeFloat   uint8 = 0x7
+	ElementTypeDate    uint8 = 0x8
+
 	ElementUnknown uint32 = 0x0
 
 	ElementEBML               uint32 = 0x1a45dfa3
