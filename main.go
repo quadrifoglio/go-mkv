@@ -34,13 +34,21 @@ func main() {
 		f.Write(header)
 
 		for {
-			clu, err := webm.ReadCluster(&doc)
+			clh, err := webm.ReadClusterHeader(&doc)
 			if err != nil {
-				fmt.Printf("Cluster error: %s\n", err)
 				break
 			}
 
-			f.Write(clu)
+			f.Write(clh)
+
+			for {
+				clu, err := webm.ReadBlock(&doc)
+				if err != nil {
+					break
+				}
+
+				f.Write(clu)
+			}
 		}
 	} else {
 		fmt.Fprintf(os.Stderr, "Usage: webm-info <file>\n")

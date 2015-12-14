@@ -58,6 +58,43 @@ func ReadHeader(doc *Document) ([]byte, error) {
 	return nil, NoHeader
 }
 
+func ReadClusterHeader(doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
+
+	if doc.Cursor+4 < doc.Length && pack32(doc.Data[doc.Cursor:doc.Cursor+4]) == ElementCluster {
+		start := doc.Cursor
+		doc.Cursor += 4
+
+		_, err := getElementSize(doc)
+		if err != nil {
+			return nil, err
+		}
+
+		var id uint32 = 0
+
+		for doc.Cursor < doc.Length {
+			id, err = getElementID(doc)
+			if err != nil {
+				return nil, err
+			}
+
+			cl := uint64(getElementIDClass(id))
+
+			if id == ElementBlock || id == ElementSimpleBlock {
+				doc.Cursor -= cl
+				return doc.Data[start:doc.Cursor], nil
+			} else {
+				doc.Cursor -= cl
+				getNextElement(doc)
+			}
+		}
+	}
+
+	return nil, io.EOF
+}
+
 func ReadCluster(doc *Document) ([]byte, error) {
 	if doc.Cursor >= doc.Length {
 		return nil, io.EOF
@@ -76,6 +113,31 @@ func ReadCluster(doc *Document) ([]byte, error) {
 	}
 
 	return nil, NoCluster
+}
+
+func ReadClusterFrame(doc *Document) ([]byte, error) {
+	if doc.Cursor >= doc.Length {
+		return nil, io.EOF
+	}
+
+	for doc.Cursor < doc.Length {
+		var c = doc.Data[doc.Cursor]
+		var cl = getElementIDClass(uint32(c))
+		var id, err = getElementID(doc)
+
+		if err != nil {
+			fmt.Println("Frame err", err)
+			doc.Cursor++
+			continue
+		}
+
+		if id == ElementBlock || id == ElementSimpleBlock {
+			doc.Cursor -= uint64(cl)
+			return ReadBlock(doc)
+		}
+	}
+
+	return nil, io.EOF
 }
 
 func ReadBlock(doc *Document) ([]byte, error) {
@@ -107,184 +169,103 @@ func getNextElement(doc *Document) (Element, error) {
 		return res, io.EOF
 	}
 
-	var b = doc.Data[doc.Cursor]
-	var c = getElementIDClass(uint32(b))
-
-	if c == 1 { // Class A ID (on 1 byte)
-		id, err := getElementID(1, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.ID = id
-
-		size, err := getElementSize(doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Size = size
-
-		d, err := getElementData(size, doc)
-		if err != nil {
-			return res, nil
-		}
-
-		res.Data = d
-		return res, nil
-	}
-	if c == 2 { // Class B ID (on 2 byte)
-		id, err := getElementID(2, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.ID = id
-
-		size, err := getElementSize(doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Size = size
-
-		switch id {
-		case ElementEBMLVersion:
-			res.Type = TypeUint
-			break
-		case ElementEBMLReadVersion:
-			res.Type = TypeUint
-			break
-		case ElementEBMLMaxIDLength:
-			res.Type = TypeUint
-			break
-		case ElementEBMLMaxSizeLength:
-			res.Type = TypeUint
-			break
-		case ElementDocType:
-			res.Type = TypeString
-			break
-		case ElementDocTypeVersion:
-			res.Type = TypeUint
-			break
-		case ElementDocTypeReadVersion:
-			res.Type = TypeUint
-			break
-		case ElementSeek:
-			res.Type = TypeMasterElement
-			break
-		case ElementSeekID:
-			res.Type = TypeBinary
-			break
-		case ElementSeekPosition:
-			res.Type = TypeUint
-			break
-		}
-
-		d, err := getElementData(size, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Data = d
-		return res, nil
-	}
-	if c == 3 { // Class C ID (on 3 bytes)
-		id, err := getElementID(3, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.ID = id
-
-		switch id {
-		}
-
-		size, err := getElementSize(doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Size = size
-
-		d, err := getElementData(size, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Data = d
-		return res, nil
-	}
-	if c == 4 { // Class D ID (on 4 bytes)
-		id, err := getElementID(4, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.ID = id
-
-		switch id {
-		case ElementEBML:
-			res.Type = TypeMasterElement
-			res.Multiple = false
-			break
-		case ElementSegment:
-			res.Type = TypeMasterElement
-			res.Multiple = true
-			break
-		case ElementSeekHead:
-			res.Type = TypeMasterElement
-			res.Multiple = true
-			break
-		case ElementCluster:
-			res.Type = TypeMasterElement
-			res.Multiple = true
-			break
-		}
-
-		size, err := getElementSize(doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Size = size
-
-		d, err := getElementData(size, doc)
-		if err != nil {
-			return res, err
-		}
-
-		res.Data = d
-		return res, nil
+	id, err := getElementID(doc)
+	if err != nil {
+		return res, err
 	}
 
-	return res, fmt.Errorf("Failed to identify element ID 0x%x (class %d)", b, c)
+	res.ID = id
+
+	switch id {
+	case ElementEBML:
+		res.Type = TypeMasterElement
+		res.Multiple = false
+		break
+	case ElementEBMLVersion:
+		res.Type = TypeUint
+		break
+	case ElementEBMLReadVersion:
+		res.Type = TypeUint
+		break
+	case ElementEBMLMaxIDLength:
+		res.Type = TypeUint
+		break
+	case ElementEBMLMaxSizeLength:
+		res.Type = TypeUint
+		break
+	case ElementDocType:
+		res.Type = TypeString
+		break
+	case ElementDocTypeVersion:
+		res.Type = TypeUint
+		break
+	case ElementDocTypeReadVersion:
+		res.Type = TypeUint
+		break
+	case ElementSeek:
+		res.Type = TypeMasterElement
+		break
+	case ElementSeekID:
+		res.Type = TypeBinary
+		break
+	case ElementSeekPosition:
+		res.Type = TypeUint
+		break
+	case ElementSegment:
+		res.Type = TypeMasterElement
+		res.Multiple = true
+		break
+	case ElementSeekHead:
+		res.Type = TypeMasterElement
+		res.Multiple = true
+		break
+	case ElementCluster:
+		res.Type = TypeMasterElement
+		res.Multiple = true
+		break
+	}
+
+	size, err := getElementSize(doc)
+	if err != nil {
+		return res, err
+	}
+
+	res.Size = size
+
+	d, err := getElementData(size, doc)
+	if err != nil {
+		return res, err
+	}
+
+	res.Data = d
+	return res, nil
 }
 
-func getElementID(class uint8, doc *Document) (uint32, error) {
+func getElementID(doc *Document) (uint32, error) {
+	class := getElementIDClass(uint32(doc.Data[doc.Cursor]))
+
 	if class == 1 {
 		b := doc.Data[doc.Cursor]
 
 		doc.Cursor++
 		return uint32(b), nil
-	}
-	if class == 2 {
+	} else if class == 2 {
 		b := doc.Data[doc.Cursor : doc.Cursor+2]
 
 		doc.Cursor += 2
 		return uint32(pack16(b)), nil
-	}
-	if class == 3 {
+	} else if class == 3 {
 		b := doc.Data[doc.Cursor : doc.Cursor+3]
 
 		doc.Cursor += 3
 		return uint32(pack24(b)), nil
-	}
-	if class == 4 {
+	} else if class == 4 {
 		b := doc.Data[doc.Cursor : doc.Cursor+4]
 
 		doc.Cursor += 4
 		return uint32(pack32(b)), nil
+	} else {
+		return 0, fmt.Errorf("Unknown ID class")
 	}
 
 	return 0, fmt.Errorf("Unknown element (ID class %d)", class)
