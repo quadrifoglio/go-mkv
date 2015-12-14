@@ -173,91 +173,91 @@ func GetElementName(id uint32) string {
 		return "DiscardPadding"
 
 	case ElementTracks:
-		return "ElementTracks"
+		return "Tracks"
 	case ElementTrackEntry:
-		return "ElementTrackEntry"
+		return "TrackEntry"
 	case ElementTrackNumber:
-		return "ElementTrackNumber"
+		return "TrackNumber"
 	case ElementTrackUID:
-		return "ElementTrackUID"
+		return "TrackUID"
 	case ElementTrackType:
-		return "ElementTrackType"
+		return "TrackType"
 	case ElementFlagEnabled:
-		return "ElementFlagEnabled"
+		return "FlagEnabled"
 	case ElementFlagDefault:
-		return "ElementFlagDefault"
+		return "FlagDefault"
 	case ElementFlagForced:
-		return "ElementFlagForced"
+		return "FlagForced"
 	case ElementFlagLacing:
-		return "ElementFlagLacing"
+		return "FlagLacing"
 	case ElementDefaultDuration:
-		return "ElementDefaultDuration"
+		return "DefaultDuration"
 	case ElementName:
-		return "ElementName"
+		return "Name"
 	case ElementLanguage:
-		return "ElementLanguage"
+		return "Language"
 	case ElementCodecID:
-		return "ElementCodecID"
+		return "CodecID"
 	case ElementCodecPrivate:
-		return "ElementCodecPrivate"
+		return "CodecPrivate"
 	case ElementCodecName:
-		return "ElementCodecName"
+		return "CodecName"
 	case ElementCodecDelay:
-		return "ElementCodecDelay"
+		return "CodecDelay"
 	case ElementSeekPreRoll:
-		return "ElementSeekPreRoll"
+		return "SeekPreRoll"
 	case ElementVideo:
-		return "ElementVideo"
+		return "Video"
 	case ElementFlagInterlaced:
-		return "ElementFlagInterlaced"
+		return "FlagInterlaced"
 	case ElementStereoMode:
-		return "ElementStereoMode"
+		return "StereoMode"
 	case ElementAlphaMode:
-		return "ElementAlphaMode"
+		return "AlphaMode"
 	case ElementPixelWidth:
-		return "ElementPixelWidth"
+		return "PixelWidth"
 	case ElementPixelHeight:
-		return "ElementPixelHeight"
+		return "PixelHeight"
 	case ElementPixelCropBottom:
-		return "ElementPixelCropBottom"
+		return "PixelCropBottom"
 	case ElementPixelCropTop:
-		return "ElementPixelCropTop"
+		return "PixelCropTop"
 	case ElementPixelCropLeft:
-		return "ElementPixelCropLeft"
+		return "PixelCropLeft"
 	case ElementPixelCropRight:
-		return "ElementPixelCropRight"
+		return "PixelCropRight"
 	case ElementDisplayWidth:
-		return "ElementDisplayWidth"
+		return "DisplayWidth"
 	case ElementDisplayHeight:
-		return "ElementDisplayHeight"
+		return "DisplayHeight"
 	case ElementDisplayUint:
-		return "ElementDisplayUint"
+		return "DisplayUint"
 	case ElementAspectRatioType:
-		return "ElementAspectRatioType"
+		return "AspectRatioType"
 	case ElementAudio:
-		return "ElementAudio"
+		return "Audio"
 	case ElementSamplingFrequency:
-		return "ElementSamplingFrequency"
+		return "SamplingFrequency"
 	case ElementOutputSamplingFrequency:
-		return "ElementOutputSamplingFrequency"
+		return "OutputSamplingFrequency"
 	case ElementChannels:
-		return "ElementChannels"
+		return "Channels"
 	case ElementBitDepth:
-		return "ElementBitDepth"
+		return "BitDepth"
 	case ElementContentEncoding:
-		return "ElementContentEncoding"
+		return "ContentEncoding"
 	case ElementContentEncodingOrder:
-		return "ElementContentEncodingOrder"
+		return "ContentEncodingOrder"
 	case ElementContentEncodingScope:
-		return "ElementContentEncodingScope"
+		return "ContentEncodingScope"
 	case ElementContentEncodingType:
-		return "ElementContentEncodingType"
+		return "ContentEncodingType"
 	case ElementContentEncryption:
-		return "ElementContentEncryption"
+		return "ContentEncryption"
 	case ElementContentEncAlgo:
-		return "ElementContentEncAlgo"
+		return "ContentEncAlgo"
 	case ElementContentEncKeyID:
-		return "ElementContentEncKeyID"
+		return "ContentEncKeyID"
 
 	case ElementUnknown:
 		return "Unknown"
