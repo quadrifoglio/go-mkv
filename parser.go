@@ -49,12 +49,12 @@ func (doc *Document) ParseElement() (Element, error) {
 		return el, io.EOF
 	}
 
-	id, err := GetElementID(doc)
+	id, err := doc.GetElementID()
 	if err != nil {
 		return el, err
 	}
 
-	size, err := GetElementSize(doc)
+	size, err := doc.GetElementSize()
 	if err != nil {
 		return el, err
 	}
@@ -82,7 +82,7 @@ func (doc *Document) ParseElement() (Element, error) {
 
 // GetElementID tries to parse the next element's id,
 // starting from the document's current cursor position.
-func GetElementID(doc *Document) (uint32, error) {
+func (doc *Document) GetElementID() (uint32, error) {
 	if doc.Cursor >= doc.Length {
 		return 0, io.EOF
 	}
@@ -112,7 +112,7 @@ func GetElementID(doc *Document) (uint32, error) {
 
 // GetElementSize tries to parse the next element's size,
 // starting from the document's current cursor position.
-func GetElementSize(doc *Document) (uint64, error) {
+func (doc *Document) GetElementSize() (uint64, error) {
 	if doc.Cursor >= doc.Length {
 		return 0, io.EOF
 	}
