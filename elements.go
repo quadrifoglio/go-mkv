@@ -1,6 +1,7 @@
 package webm
 
-const (
+var (
+	ElementType        uint8 = 0x0
 	ElementTypeUnknown uint8 = 0x0
 	ElementTypeMaster  uint8 = 0x1
 	ElementTypeUint    uint8 = 0x2
@@ -11,257 +12,251 @@ const (
 	ElementTypeFloat   uint8 = 0x7
 	ElementTypeDate    uint8 = 0x8
 
-	ElementUnknown uint32 = 0x0
-
-	ElementEBML               uint32 = 0x1a45dfa3
-	ElementEBMLVersion        uint32 = 0x4286
-	ElementEBMLReadVersion    uint32 = 0x42f7
-	ElementEBMLMaxIDLength    uint32 = 0x42f2
-	ElementEBMLMaxSizeLength  uint32 = 0x42f3
-	ElementDocType            uint32 = 0x4282
-	ElementDocTypeVersion     uint32 = 0x4287
-	ElementDocTypeReadVersion uint32 = 0x4285
-
-	ElementVoid    uint32 = 0xec
-	ElementSegment uint32 = 0x18538067
-
-	ElementSeekHead     uint32 = 0x114d9b74
-	ElementSeek         uint32 = 0x4dbb
-	ElementSeekID       uint32 = 0x53ab
-	ElementSeekPosition uint32 = 0x53ac
-
-	ElementInfo          uint32 = 0x1549a966
-	ElementTimecodeScale uint32 = 0x2ad7b1
-	ElementDuration      uint32 = 0x4489
-	ElementDateUTC       uint32 = 0x4461
-	ElementTitle         uint32 = 0x7ba9
-	ElementMuxingApp     uint32 = 0x4d80
-	ElementWritingApp    uint32 = 0x5741
-
-	ElementCluster         uint32 = 0x1f43b675
-	ElementTimecode        uint32 = 0xe7
-	ElementPrevSize        uint32 = 0xab
-	ElementSimpleBlock     uint32 = 0xa3
-	ElementBlockGroup      uint32 = 0xa0
-	ElementBlock           uint32 = 0xa1
-	ElementBlockAdditions  uint32 = 0x75a1
-	ElementBlockMore       uint32 = 0xa6
-	ElementBlockAddID      uint32 = 0xee
-	ElementBlockAdditional uint32 = 0xa5
-	ElementBlockDuration   uint32 = 0x9b
-	ElementReferenceBlock  uint32 = 0xfb
-	ElementDiscardPadding  uint32 = 0x75a2
-
-	ElementTracks                  uint32 = 0x1654ae6b
-	ElementTrackEntry              uint32 = 0xae
-	ElementTrackNumber             uint32 = 0xd7
-	ElementTrackUID                uint32 = 0x73c5
-	ElementTrackType               uint32 = 0x83
-	ElementFlagEnabled             uint32 = 0xb9
-	ElementFlagDefault             uint32 = 0x88
-	ElementFlagForced              uint32 = 0x55aa
-	ElementFlagLacing              uint32 = 0x9c
-	ElementDefaultDuration         uint32 = 0x23e383
-	ElementName                    uint32 = 0x536e
-	ElementLanguage                uint32 = 0x22b59c
-	ElementCodecID                 uint32 = 0x86
-	ElementCodecPrivate            uint32 = 0x63a2
-	ElementCodecName               uint32 = 0x258688
-	ElementCodecDelay              uint32 = 0x56aa
-	ElementSeekPreRoll             uint32 = 0x56bb
-	ElementVideo                   uint32 = 0xe0
-	ElementFlagInterlaced          uint32 = 0x9a
-	ElementStereoMode              uint32 = 0x53b8
-	ElementAlphaMode               uint32 = 0x53c0
-	ElementPixelWidth              uint32 = 0xb0
-	ElementPixelHeight             uint32 = 0xba
-	ElementPixelCropBottom         uint32 = 0x54aa
-	ElementPixelCropTop            uint32 = 0x54bb
-	ElementPixelCropLeft           uint32 = 0x54cc
-	ElementPixelCropRight          uint32 = 0x54dd
-	ElementDisplayWidth            uint32 = 0x54b0
-	ElementDisplayHeight           uint32 = 0x54ba
-	ElementDisplayUint             uint32 = 0x54b2
-	ElementAspectRatioType         uint32 = 0x54b3
-	ElementAudio                   uint32 = 0xe1
-	ElementSamplingFrequency       uint32 = 0xb5
-	ElementOutputSamplingFrequency uint32 = 0x78b5
-	ElementChannels                uint32 = 0x9f
-	ElementBitDepth                uint32 = 0x6264
-	ElementContentEncoding         uint32 = 0x6240
-	ElementContentEncodingOrder    uint32 = 0x5031
-	ElementContentEncodingScope    uint32 = 0x5032
-	ElementContentEncodingType     uint32 = 0x5033
-	ElementContentEncryption       uint32 = 0x5035
-	ElementContentEncAlgo          uint32 = 0x47e1
-	ElementContentEncKeyID         uint32 = 0x47e2
+	ElementUnknown                 = ElementRegister{0x0, ElementTypeUnknown, "Unknown"}
+	ElementEBML                    = ElementRegister{0x1a45dfa3, ElementTypeMaster, "EBML"}
+	ElementEBMLVersion             = ElementRegister{0x4286, ElementTypeUint, "EBMLVersion"}
+	ElementEBMLReadVersion         = ElementRegister{0x42f7, ElementTypeUint, "EBMLReadVersion"}
+	ElementEBMLMaxIDLength         = ElementRegister{0x42f2, ElementTypeUint, "EBMLMaxIDLength"}
+	ElementEBMLMaxSizeLength       = ElementRegister{0x42f3, ElementTypeUint, "EBMLMaxSizeLength"}
+	ElementDocType                 = ElementRegister{0x4282, ElementTypeString, "DocType"}
+	ElementDocTypeVersion          = ElementRegister{0x4287, ElementTypeUint, "DocTypeVersion"}
+	ElementDocTypeReadVersion      = ElementRegister{0x4285, ElementTypeUint, "DocTypeReadVersion"}
+	ElementVoid                    = ElementRegister{0xec, ElementTypeBinary, "Void"}
+	ElementCRC32                   = ElementRegister{0xbf, ElementTypeBinary, "CRC-32"}
+	ElementSegment                 = ElementRegister{0x18538067, ElementTypeMaster, "Segment"}
+	ElementSeekHead                = ElementRegister{0x114d9b74, ElementTypeMaster, "SeekHead"}
+	ElementSeek                    = ElementRegister{0x4dbb, ElementTypeMaster, "Seek"}
+	ElementSeekID                  = ElementRegister{0x53ab, ElementTypeBinary, "SeekID"}
+	ElementSeekPosition            = ElementRegister{0x53ac, ElementTypeUint, "SeekPosition"}
+	ElementInfo                    = ElementRegister{0x1549a966, ElementTypeMaster, "Info"}
+	ElementTimecodeScale           = ElementRegister{0x2ad7b1, ElementTypeUint, "TimecodeScale"}
+	ElementDuration                = ElementRegister{0x4489, ElementTypeFloat, "Duration"}
+	ElementDateUTC                 = ElementRegister{0x4461, ElementTypeDate, "DateUTC"}
+	ElementTitle                   = ElementRegister{0x7ba9, ElementTypeUnicode, "Title"}
+	ElementMuxingApp               = ElementRegister{0x4d80, ElementTypeUnicode, "MuxingApp"}
+	ElementWritingApp              = ElementRegister{0x5741, ElementTypeUnicode, "WritingApp"}
+	ElementCluster                 = ElementRegister{0x1f43b675, ElementTypeMaster, "Cluster"}
+	ElementTimecode                = ElementRegister{0xe7, ElementTypeUint, "Timecode"}
+	ElementPrevSize                = ElementRegister{0xab, ElementTypeUint, "PrevSize"}
+	ElementSimpleBlock             = ElementRegister{0xa3, ElementTypeBinary, "SimpleBlock"}
+	ElementBlockGroup              = ElementRegister{0xa0, ElementTypeMaster, "BlockGroup"}
+	ElementBlock                   = ElementRegister{0xa1, ElementTypeBinary, "Block"}
+	ElementBlockAdditions          = ElementRegister{0x75a1, ElementTypeMaster, "BlockAdditions"}
+	ElementBlockMore               = ElementRegister{0xa6, ElementTypeMaster, "BlockMore"}
+	ElementBlockAddID              = ElementRegister{0xee, ElementTypeUint, "BlockAddID"}
+	ElementBlockAdditional         = ElementRegister{0xa5, ElementTypeBinary, "BlockAdditional"}
+	ElementBlockDuration           = ElementRegister{0x9b, ElementTypeUint, "BlockDuration"}
+	ElementReferenceBlock          = ElementRegister{0xfb, ElementTypeInt, "ReferenceBlock"}
+	ElementDiscardPadding          = ElementRegister{0x75a2, ElementTypeInt, "DiscardPadding"}
+	ElementTracks                  = ElementRegister{0x1654ae6b, ElementTypeMaster, "Tracks"}
+	ElementTrackEntry              = ElementRegister{0xae, ElementTypeMaster, "TrackEntry"}
+	ElementTrackNumber             = ElementRegister{0xd7, ElementTypeUint, "TrackNumber"}
+	ElementTrackUID                = ElementRegister{0x73c5, ElementTypeUint, "TrackUID"}
+	ElementTrackType               = ElementRegister{0x83, ElementTypeUint, "TrackType"}
+	ElementFlagEnabled             = ElementRegister{0xb9, ElementTypeUint, "FlagEnabled"}
+	ElementFlagDefault             = ElementRegister{0x88, ElementTypeUint, "FlagDefault"}
+	ElementFlagForced              = ElementRegister{0x55aa, ElementTypeUint, "FlagForced"}
+	ElementFlagLacing              = ElementRegister{0x9c, ElementTypeUint, "FlagLacing"}
+	ElementDefaultDuration         = ElementRegister{0x23e383, ElementTypeUint, "DefaultDuration"}
+	ElementName                    = ElementRegister{0x536e, ElementTypeUnicode, "Name"}
+	ElementLanguage                = ElementRegister{0x22b59c, ElementTypeString, "Language"}
+	ElementCodecID                 = ElementRegister{0x86, ElementTypeString, "CodecID"}
+	ElementCodecPrivate            = ElementRegister{0x63a2, ElementTypeBinary, "CodecPrivate"}
+	ElementCodecName               = ElementRegister{0x258688, ElementTypeUnicode, "CodecName"}
+	ElementCodecDelay              = ElementRegister{0x56aa, ElementTypeUint, "CodecDelay"}
+	ElementSeekPreRoll             = ElementRegister{0x56bb, ElementTypeUint, "SeekPreRoll"}
+	ElementVideo                   = ElementRegister{0xe0, ElementTypeMaster, "Video"}
+	ElementFlagInterlaced          = ElementRegister{0x9a, ElementTypeUint, "FlagInterlaced"}
+	ElementStereoMode              = ElementRegister{0x53b8, ElementTypeUint, "StereoMode"}
+	ElementAlphaMode               = ElementRegister{0x53c0, ElementTypeUint, "AlphaMode"}
+	ElementPixelWidth              = ElementRegister{0xb0, ElementTypeUint, "PixelWidth"}
+	ElementPixelHeight             = ElementRegister{0xba, ElementTypeUint, "PixelHeight"}
+	ElementPixelCropBottom         = ElementRegister{0x54aa, ElementTypeUint, "PixelCropBottom"}
+	ElementPixelCropTop            = ElementRegister{0x54bb, ElementTypeUint, "PixelCropTop"}
+	ElementPixelCropLeft           = ElementRegister{0x54cc, ElementTypeUint, "PixelCropLeft"}
+	ElementPixelCropRight          = ElementRegister{0x54dd, ElementTypeUint, "PixelCropRight"}
+	ElementDisplayWidth            = ElementRegister{0x54b0, ElementTypeUint, "DisplayWidth"}
+	ElementDisplayHeight           = ElementRegister{0x54ba, ElementTypeUint, "DisplayHeight"}
+	ElementDisplayUint             = ElementRegister{0x54b2, ElementTypeUint, "DisplayUint"}
+	ElementAspectRatioType         = ElementRegister{0x54b3, ElementTypeUint, "AspectRatioType"}
+	ElementAudio                   = ElementRegister{0xe1, ElementTypeMaster, "Audio"}
+	ElementSamplingFrequency       = ElementRegister{0xb5, ElementTypeFloat, "SamplingFrequency"}
+	ElementOutputSamplingFrequency = ElementRegister{0x78b5, ElementTypeFloat, "OutputSamplingFrequency"}
+	ElementChannels                = ElementRegister{0x9f, ElementTypeUint, "Channels"}
+	ElementBitDepth                = ElementRegister{0x6264, ElementTypeUint, "BitDepth"}
+	ElementContentEncodings        = ElementRegister{0x6d80, ElementTypeMaster, "ContentEncodings"}
+	ElementContentEncoding         = ElementRegister{0x6240, ElementTypeMaster, "ContentEncoding"}
+	ElementContentEncodingOrder    = ElementRegister{0x5031, ElementTypeUint, "ContentEncodingOrder"}
+	ElementContentEncodingScope    = ElementRegister{0x5032, ElementTypeUint, "ContentEncodingScope"}
+	ElementContentEncodingType     = ElementRegister{0x5033, ElementTypeUint, "ContentEncodingType"}
+	ElementContentEncryption       = ElementRegister{0x5035, ElementTypeMaster, "ContentEncryption"}
+	ElementContentEncAlgo          = ElementRegister{0x47e1, ElementTypeUint, "ContentEncAlgo"}
+	ElementContentEncKeyID         = ElementRegister{0x47e2, ElementTypeUint, "ContentEncKeyID"}
 )
 
-func GetElementName(id uint32) string {
+func GetElementRegister(id uint32) ElementRegister {
 	switch id {
-	case ElementEBML:
-		return "EBML"
-	case ElementEBMLVersion:
-		return "EBMLVersion"
-	case ElementEBMLReadVersion:
-		return "EBMLReadVersion"
-	case ElementEBMLMaxIDLength:
-		return "EBMLMaxIDLength"
-	case ElementEBMLMaxSizeLength:
-		return "EBMLMaxSizeLength"
-	case ElementDocType:
-		return "DocType"
-	case ElementDocTypeVersion:
-		return "DocTypeVersion"
-	case ElementDocTypeReadVersion:
-		return "DocTypeReadVersion"
-
-	case ElementVoid:
-		return "Void"
-	case ElementSegment:
-		return "Segment"
-
-	case ElementSeekHead:
-		return "SeekHead"
-	case ElementSeek:
-		return "Seek"
-	case ElementSeekID:
-		return "SeekID"
-	case ElementSeekPosition:
-		return "SeekPosition"
-
-	case ElementInfo:
-		return "Info"
-	case ElementTimecodeScale:
-		return "TimecodeScale"
-	case ElementDuration:
-		return "Duration"
-	case ElementDateUTC:
-		return "DateUTC"
-	case ElementTitle:
-		return "Title"
-	case ElementMuxingApp:
-		return "MuxingApp"
-	case ElementWritingApp:
-		return "WritingApp"
-
-	case ElementCluster:
-		return "Cluster"
-	case ElementTimecode:
-		return "Timecode"
-	case ElementPrevSize:
-		return "PrevSize"
-	case ElementSimpleBlock:
-		return "SimpleBlock"
-	case ElementBlockGroup:
-		return "BlockGroup"
-	case ElementBlock:
-		return "Block"
-	case ElementBlockAdditions:
-		return "BlockAdditions"
-	case ElementBlockMore:
-		return "BlockMore"
-	case ElementBlockAddID:
-		return "BlockAddID"
-	case ElementBlockAdditional:
-		return "BlockAdditional"
-	case ElementBlockDuration:
-		return "BlockDuration"
-	case ElementReferenceBlock:
-		return "ReferenceBlock"
-	case ElementDiscardPadding:
-		return "DiscardPadding"
-
-	case ElementTracks:
-		return "Tracks"
-	case ElementTrackEntry:
-		return "TrackEntry"
-	case ElementTrackNumber:
-		return "TrackNumber"
-	case ElementTrackUID:
-		return "TrackUID"
-	case ElementTrackType:
-		return "TrackType"
-	case ElementFlagEnabled:
-		return "FlagEnabled"
-	case ElementFlagDefault:
-		return "FlagDefault"
-	case ElementFlagForced:
-		return "FlagForced"
-	case ElementFlagLacing:
-		return "FlagLacing"
-	case ElementDefaultDuration:
-		return "DefaultDuration"
-	case ElementName:
-		return "Name"
-	case ElementLanguage:
-		return "Language"
-	case ElementCodecID:
-		return "CodecID"
-	case ElementCodecPrivate:
-		return "CodecPrivate"
-	case ElementCodecName:
-		return "CodecName"
-	case ElementCodecDelay:
-		return "CodecDelay"
-	case ElementSeekPreRoll:
-		return "SeekPreRoll"
-	case ElementVideo:
-		return "Video"
-	case ElementFlagInterlaced:
-		return "FlagInterlaced"
-	case ElementStereoMode:
-		return "StereoMode"
-	case ElementAlphaMode:
-		return "AlphaMode"
-	case ElementPixelWidth:
-		return "PixelWidth"
-	case ElementPixelHeight:
-		return "PixelHeight"
-	case ElementPixelCropBottom:
-		return "PixelCropBottom"
-	case ElementPixelCropTop:
-		return "PixelCropTop"
-	case ElementPixelCropLeft:
-		return "PixelCropLeft"
-	case ElementPixelCropRight:
-		return "PixelCropRight"
-	case ElementDisplayWidth:
-		return "DisplayWidth"
-	case ElementDisplayHeight:
-		return "DisplayHeight"
-	case ElementDisplayUint:
-		return "DisplayUint"
-	case ElementAspectRatioType:
-		return "AspectRatioType"
-	case ElementAudio:
-		return "Audio"
-	case ElementSamplingFrequency:
-		return "SamplingFrequency"
-	case ElementOutputSamplingFrequency:
-		return "OutputSamplingFrequency"
-	case ElementChannels:
-		return "Channels"
-	case ElementBitDepth:
-		return "BitDepth"
-	case ElementContentEncoding:
-		return "ContentEncoding"
-	case ElementContentEncodingOrder:
-		return "ContentEncodingOrder"
-	case ElementContentEncodingScope:
-		return "ContentEncodingScope"
-	case ElementContentEncodingType:
-		return "ContentEncodingType"
-	case ElementContentEncryption:
-		return "ContentEncryption"
-	case ElementContentEncAlgo:
-		return "ContentEncAlgo"
-	case ElementContentEncKeyID:
-		return "ContentEncKeyID"
-
-	case ElementUnknown:
-		return "Unknown"
+	case ElementEBML.ID:
+		return ElementEBML
+	case ElementEBMLVersion.ID:
+		return ElementEBMLVersion
+	case ElementEBMLReadVersion.ID:
+		return ElementEBMLReadVersion
+	case ElementEBMLMaxIDLength.ID:
+		return ElementEBMLMaxIDLength
+	case ElementEBMLMaxSizeLength.ID:
+		return ElementEBMLMaxSizeLength
+	case ElementDocType.ID:
+		return ElementDocType
+	case ElementDocTypeVersion.ID:
+		return ElementDocTypeVersion
+	case ElementDocTypeReadVersion.ID:
+		return ElementDocTypeReadVersion
+	case ElementVoid.ID:
+		return ElementVoid
+	case ElementCRC32.ID:
+		return ElementCRC32
+	case ElementSegment.ID:
+		return ElementSegment
+	case ElementSeekHead.ID:
+		return ElementSeekHead
+	case ElementSeek.ID:
+		return ElementSeek
+	case ElementSeekID.ID:
+		return ElementSeekID
+	case ElementSeekPosition.ID:
+		return ElementSeekPosition
+	case ElementInfo.ID:
+		return ElementInfo
+	case ElementTimecodeScale.ID:
+		return ElementTimecodeScale
+	case ElementDuration.ID:
+		return ElementDuration
+	case ElementDateUTC.ID:
+		return ElementDateUTC
+	case ElementTitle.ID:
+		return ElementTitle
+	case ElementMuxingApp.ID:
+		return ElementMuxingApp
+	case ElementWritingApp.ID:
+		return ElementWritingApp
+	case ElementCluster.ID:
+		return ElementCluster
+	case ElementTimecode.ID:
+		return ElementTimecode
+	case ElementPrevSize.ID:
+		return ElementPrevSize
+	case ElementSimpleBlock.ID:
+		return ElementSimpleBlock
+	case ElementBlockGroup.ID:
+		return ElementBlockGroup
+	case ElementBlock.ID:
+		return ElementBlock
+	case ElementBlockAdditions.ID:
+		return ElementBlockAdditions
+	case ElementBlockMore.ID:
+		return ElementBlockMore
+	case ElementBlockAddID.ID:
+		return ElementBlockAddID
+	case ElementBlockAdditional.ID:
+		return ElementBlockAdditional
+	case ElementBlockDuration.ID:
+		return ElementBlockDuration
+	case ElementReferenceBlock.ID:
+		return ElementReferenceBlock
+	case ElementDiscardPadding.ID:
+		return ElementDiscardPadding
+	case ElementTracks.ID:
+		return ElementTracks
+	case ElementTrackEntry.ID:
+		return ElementTrackEntry
+	case ElementTrackNumber.ID:
+		return ElementTrackNumber
+	case ElementTrackUID.ID:
+		return ElementTrackUID
+	case ElementTrackType.ID:
+		return ElementTrackType
+	case ElementFlagEnabled.ID:
+		return ElementFlagEnabled
+	case ElementFlagDefault.ID:
+		return ElementFlagDefault
+	case ElementFlagForced.ID:
+		return ElementFlagForced
+	case ElementFlagLacing.ID:
+		return ElementFlagLacing
+	case ElementDefaultDuration.ID:
+		return ElementDefaultDuration
+	case ElementName.ID:
+		return ElementName
+	case ElementLanguage.ID:
+		return ElementLanguage
+	case ElementCodecID.ID:
+		return ElementCodecID
+	case ElementCodecPrivate.ID:
+		return ElementCodecPrivate
+	case ElementCodecName.ID:
+		return ElementCodecName
+	case ElementCodecDelay.ID:
+		return ElementCodecDelay
+	case ElementSeekPreRoll.ID:
+		return ElementSeekPreRoll
+	case ElementVideo.ID:
+		return ElementVideo
+	case ElementFlagInterlaced.ID:
+		return ElementFlagInterlaced
+	case ElementStereoMode.ID:
+		return ElementStereoMode
+	case ElementAlphaMode.ID:
+		return ElementAlphaMode
+	case ElementPixelWidth.ID:
+		return ElementPixelWidth
+	case ElementPixelHeight.ID:
+		return ElementPixelHeight
+	case ElementPixelCropBottom.ID:
+		return ElementPixelCropBottom
+	case ElementPixelCropTop.ID:
+		return ElementPixelCropTop
+	case ElementPixelCropLeft.ID:
+		return ElementPixelCropLeft
+	case ElementPixelCropRight.ID:
+		return ElementPixelCropRight
+	case ElementDisplayWidth.ID:
+		return ElementDisplayWidth
+	case ElementDisplayHeight.ID:
+		return ElementDisplayHeight
+	case ElementDisplayUint.ID:
+		return ElementDisplayUint
+	case ElementAspectRatioType.ID:
+		return ElementAspectRatioType
+	case ElementAudio.ID:
+		return ElementAudio
+	case ElementSamplingFrequency.ID:
+		return ElementSamplingFrequency
+	case ElementOutputSamplingFrequency.ID:
+		return ElementOutputSamplingFrequency
+	case ElementChannels.ID:
+		return ElementChannels
+	case ElementBitDepth.ID:
+		return ElementBitDepth
+	case ElementContentEncodings.ID:
+		return ElementContentEncodings
+	case ElementContentEncoding.ID:
+		return ElementContentEncoding
+	case ElementContentEncodingOrder.ID:
+		return ElementContentEncodingOrder
+	case ElementContentEncodingScope.ID:
+		return ElementContentEncodingScope
+	case ElementContentEncodingType.ID:
+		return ElementContentEncodingType
+	case ElementContentEncryption.ID:
+		return ElementContentEncryption
+	case ElementContentEncAlgo.ID:
+		return ElementContentEncAlgo
+	case ElementContentEncKeyID.ID:
+		return ElementContentEncKeyID
+	case ElementUnknown.ID:
+		return ElementUnknown
 	default:
-		return "Unknown"
+		return ElementUnknown
 	}
 }

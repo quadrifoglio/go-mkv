@@ -2,6 +2,7 @@ package webm
 
 import (
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -24,17 +25,18 @@ func (doc *Document) GetAllElements() []Element {
 	var els = make([]Element, 0)
 
 	for doc.Cursor < doc.Length {
+		_ = "breakpoint"
+
 		el, err := doc.ReadElement()
 		if err == ErrUnexpectedEOF || err == io.EOF {
 			break
-		} else if err != nil || GetElementName(el.ID) == "Unknown" {
-			// TODO: Skip unknown elements properly
-			// This is causing incorrect element showing up
-			doc.Cursor++
-			continue
+		} else if err != nil {
+			fmt.Println(err)
+			break
 		}
 
 		els = append(els, el)
+		fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
 	}
 
 	return els
@@ -58,10 +60,23 @@ func (doc *Document) ReadElement() (Element, error) {
 		return el, err
 	}
 
-	el.ID = id
-	el.Name = GetElementName(el.ID)
-	el.Size = size
-	el.Index = s
+	el = Element{
+		GetElementRegister(id),
+		nil,
+		0,
+		s,
+		size,
+		nil,
+	}
+
+	if el.Type != ElementTypeMaster {
+		if doc.Cursor+size >= doc.Length {
+			return el, ErrUnexpectedEOF
+		}
+
+		el.Data = doc.Data[doc.Cursor : doc.Cursor+size]
+		doc.Cursor += el.Size
+	}
 
 	return el, nil
 }

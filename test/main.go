@@ -23,9 +23,10 @@ func main() {
 	}
 
 	doc := webm.InitDocument(data)
-	elements := doc.GetAllElements()
+	doc.GetAllElements()
+	fmt.Println("Done loading")
 
-	for _, el := range elements {
+	/*for _, el := range elements {
 		fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
-	}
+	}*/
 }
