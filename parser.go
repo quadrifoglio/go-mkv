@@ -10,6 +10,8 @@ var (
 	ErrUnexpectedEOF = errors.New("Unexpected EOF")
 )
 
+// InitDocument creates a WebM document containing the file data
+// It does not do any parsing
 func InitDocument(data []byte) *Document {
 	doc := new(Document)
 
@@ -20,9 +22,13 @@ func InitDocument(data []byte) *Document {
 	return doc
 }
 
+// ParseAll parses the entire WebM document
+// When an EBML/WebM element is encountered, it calls the provided function
+// and passes the newly parsed element
 func (doc *Document) ParseAll(c func(Element)) error {
 	for doc.Cursor < doc.Length {
-		el, err := doc.ReadElement()
+		// TODO: Get the element's level
+		el, err := doc.ParseElement()
 		if err != nil {
 			return err
 		}
@@ -33,7 +39,9 @@ func (doc *Document) ParseAll(c func(Element)) error {
 	return nil
 }
 
-func (doc *Document) ReadElement() (Element, error) {
+// ParseElement parses an EBML/WebM element starting at the document's current cursor position
+// Because of its nature, it does not set the elements's parent or level.
+func (doc *Document) ParseElement() (Element, error) {
 	var el Element
 	var s = doc.Cursor
 
@@ -41,12 +49,12 @@ func (doc *Document) ReadElement() (Element, error) {
 		return el, io.EOF
 	}
 
-	id, err := getElementID(doc)
+	id, err := GetElementID(doc)
 	if err != nil {
 		return el, err
 	}
 
-	size, err := getElementSize(doc)
+	size, err := GetElementSize(doc)
 	if err != nil {
 		return el, err
 	}
@@ -72,7 +80,9 @@ func (doc *Document) ReadElement() (Element, error) {
 	return el, nil
 }
 
-func getElementID(doc *Document) (uint32, error) {
+// GetElementID tries to parse the next element's id,
+// starting from the document's current cursor position.
+func GetElementID(doc *Document) (uint32, error) {
 	if doc.Cursor >= doc.Length {
 		return 0, io.EOF
 	}
@@ -100,7 +110,9 @@ func getElementID(doc *Document) (uint32, error) {
 	return 0, ErrParse
 }
 
-func getElementSize(doc *Document) (uint64, error) {
+// GetElementSize tries to parse the next element's size,
+// starting from the document's current cursor position.
+func GetElementSize(doc *Document) (uint64, error) {
 	if doc.Cursor >= doc.Length {
 		return 0, io.EOF
 	}

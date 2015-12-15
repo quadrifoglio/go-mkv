@@ -1,6 +1,6 @@
 package webm
 
-var (
+const (
 	ElementType        uint8 = 0x0
 	ElementTypeUnknown uint8 = 0x0
 	ElementTypeMaster  uint8 = 0x1
@@ -11,7 +11,9 @@ var (
 	ElementTypeBinary  uint8 = 0x6
 	ElementTypeFloat   uint8 = 0x7
 	ElementTypeDate    uint8 = 0x8
+)
 
+var (
 	ElementUnknown                 = ElementRegister{0x0, ElementTypeUnknown, "Unknown"}
 	ElementEBML                    = ElementRegister{0x1a45dfa3, ElementTypeMaster, "EBML"}
 	ElementEBMLVersion             = ElementRegister{0x4286, ElementTypeUint, "EBMLVersion"}
@@ -94,6 +96,7 @@ var (
 	ElementContentEncKeyID         = ElementRegister{0x47e2, ElementTypeUint, "ContentEncKeyID"}
 )
 
+// GetElementRegister returns the infos concerning the provided element ID
 func GetElementRegister(id uint32) ElementRegister {
 	switch id {
 	case ElementEBML.ID:
