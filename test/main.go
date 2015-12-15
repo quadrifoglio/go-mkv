@@ -28,6 +28,6 @@ func main() {
 	})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s at %d\n", doc.Cursor)
+		fmt.Fprintf(os.Stderr, "%s at %d\n", err, doc.Cursor)
 	}
 }
