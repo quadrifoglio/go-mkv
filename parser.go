@@ -2,7 +2,6 @@ package webm
 
 import (
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -21,25 +20,17 @@ func InitDocument(data []byte) *Document {
 	return doc
 }
 
-func (doc *Document) GetAllElements() []Element {
-	var els = make([]Element, 0)
-
+func (doc *Document) ParseAll(c func(Element)) error {
 	for doc.Cursor < doc.Length {
-		_ = "breakpoint"
-
 		el, err := doc.ReadElement()
-		if err == ErrUnexpectedEOF || err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println(err)
-			break
+		if err != nil {
+			return err
 		}
 
-		els = append(els, el)
-		fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
+		c(el)
 	}
 
-	return els
+	return nil
 }
 
 func (doc *Document) ReadElement() (Element, error) {
@@ -70,7 +61,7 @@ func (doc *Document) ReadElement() (Element, error) {
 	}
 
 	if el.Type != ElementTypeMaster {
-		if doc.Cursor+size >= doc.Length {
+		if doc.Cursor+size > doc.Length {
 			return el, ErrUnexpectedEOF
 		}
 
