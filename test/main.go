@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dreamvids/go-webm"
+	"github.com/quadrifoglio/go-webm"
 )
 
 func main() {
