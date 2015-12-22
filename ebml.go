@@ -19,9 +19,10 @@ type ElementRegister struct {
 type Element struct {
 	ElementRegister
 
-	Parent *Element
-	Level  int32
-	Index  uint64
-	Size   uint64
-	Data   []byte
+	Parent  *Element
+	Level   int32
+	Index   uint64
+	Size    uint64
+	Content []byte // Data contained in the element, nil if it is a master element
+	Bytes   []byte // Whole binary representation of the element (nil if data is missing)
 }

@@ -66,6 +66,11 @@ func (doc *Document) ParseElement() (Element, error) {
 		s,
 		size,
 		nil,
+		nil,
+	}
+
+	if doc.Cursor+size < doc.Length {
+		el.Bytes = doc.Data[s : doc.Cursor+size]
 	}
 
 	if el.Type != ElementTypeMaster {
@@ -73,7 +78,7 @@ func (doc *Document) ParseElement() (Element, error) {
 			return el, ErrUnexpectedEOF
 		}
 
-		el.Data = doc.Data[doc.Cursor : doc.Cursor+size]
+		el.Content = doc.Data[doc.Cursor : doc.Cursor+size]
 		doc.Cursor += el.Size
 	}
 
