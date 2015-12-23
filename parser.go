@@ -26,14 +26,37 @@ func InitDocument(data []byte) *Document {
 // When an EBML/WebM element is encountered, it calls the provided function
 // and passes the newly parsed element
 func (doc *Document) ParseAll(c func(Element)) error {
-	for doc.Cursor < doc.Length {
-		// TODO: Get the element's level
+	for doc.cursor < doc.length {
+		// TODO: get the element's level
 		el, err := doc.ParseElement()
 		if err != nil {
 			return err
 		}
 
 		c(el)
+	}
+
+	return nil
+}
+
+// ParseAllUntil does the same thing as ParseAll, but stops if the specified
+// element ID is encountered in the document
+func (doc *Document) ParseAllUntil(stopID uint32, c func(Element)) error {
+	for doc.cursor < doc.length {
+		s := doc.Cursor
+
+		// TODO: get the element's level
+		el, err := doc.ParseElement()
+		if err != nil {
+			return err
+		}
+
+		if el.ID == stopID {
+			doc.Cursor = s
+			return nil
+		} else {
+			c(el)
+		}
 	}
 
 	return nil
