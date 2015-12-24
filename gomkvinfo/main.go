@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/quadrifoglio/go-webm"
+	"github.com/quadrifoglio/go-mkv"
 )
 
 func main() {
-	fmt.Println("Go-WebM")
+	fmt.Println("go-mkv")
 
 	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "Usage: webminfo [options] <file>\n")
+		fmt.Fprintf(os.Stderr, "Usage: gomkvinfo [options] <file>\n")
 		os.Exit(1)
 	}
 
@@ -22,8 +22,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	doc := webm.InitDocument(file)
-	err = doc.ParseAll(func(el webm.Element) {
+	doc := mkv.InitDocument(file)
+	err = doc.ParseAll(func(el mkv.Element) {
 		fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
 	})
 
