@@ -1,6 +1,6 @@
-# Go-WebM
+# go-mkv
 
-WebM parsing for the Go Programming Language.
+Matroska/WebM parsing for the Go Programming Language.
 
 ## Example
 
@@ -11,8 +11,8 @@ if err != nil {
 	os.Exit(1)
 }
 
-doc := webm.InitDocument(file)
-err = doc.ParseAll(func(el webm.Element) {
+doc := mkv.InitDocument(file)
+err = doc.ParseAll(func(el mkv.Element) {
 	// Found an EBML/WebM element
 	fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
 })

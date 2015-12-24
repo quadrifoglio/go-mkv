@@ -1,4 +1,4 @@
-package webm
+package mkv
 
 // Document represents a WebM file
 type Document struct {
