@@ -1,10 +1,12 @@
 package mkv
 
+import (
+	"io"
+)
+
 // Document represents a WebM file
 type Document struct {
-	Data   []byte
-	Length uint64
-	Cursor uint64
+	r io.Reader
 }
 
 // ElementRegister contains the ID, type and name of the
@@ -21,7 +23,6 @@ type Element struct {
 
 	Parent  *Element
 	Level   int32
-	Index   uint64
 	Size    uint64
 	Content []byte // Data contained in the element, nil if it is a master element
 	Bytes   []byte // Whole binary representation of the element (nil if data is missing)

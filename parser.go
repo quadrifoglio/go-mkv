@@ -12,12 +12,9 @@ var (
 
 // InitDocument creates a WebM document containing the file data
 // It does not do any parsing
-func InitDocument(data []byte) *Document {
+func InitDocument(r io.Reader) *Document {
 	doc := new(Document)
-
-	doc.Data = data
-	doc.Length = uint64(len(data))
-	doc.Cursor = 0
+	doc.r = r
 
 	return doc
 }
@@ -26,8 +23,7 @@ func InitDocument(data []byte) *Document {
 // When an EBML/WebM element is encountered, it calls the provided function
 // and passes the newly parsed element
 func (doc *Document) ParseAll(c func(Element)) error {
-	for doc.Cursor < doc.Length {
-		// TODO: get the element's level
+	for {
 		el, err := doc.ParseElement()
 		if err != nil {
 			return err
@@ -39,38 +35,10 @@ func (doc *Document) ParseAll(c func(Element)) error {
 	return nil
 }
 
-// ParseAllUntil does the same thing as ParseAll, but stops if the specified
-// element ID is encountered in the document
-func (doc *Document) ParseAllUntil(stopID uint32, c func(Element)) error {
-	for doc.Cursor < doc.Length {
-		s := doc.Cursor
-
-		// TODO: get the element's level
-		el, err := doc.ParseElement()
-		if err != nil {
-			return err
-		}
-
-		if el.ID == stopID {
-			doc.Cursor = s
-			return nil
-		} else {
-			c(el)
-		}
-	}
-
-	return nil
-}
-
 // ParseElement parses an EBML/WebM element starting at the document's current cursor position
 // Because of its nature, it does not set the elements's parent or level.
 func (doc *Document) ParseElement() (Element, error) {
 	var el Element
-	var s = doc.Cursor
-
-	if doc.Cursor >= doc.Length {
-		return el, io.EOF
-	}
 
 	id, err := doc.GetElementID()
 	if err != nil {
@@ -86,23 +54,18 @@ func (doc *Document) ParseElement() (Element, error) {
 		GetElementRegister(id),
 		nil,
 		0,
-		s,
 		size,
 		nil,
 		nil,
 	}
 
-	if doc.Cursor+size < doc.Length {
-		el.Bytes = doc.Data[s : doc.Cursor+size]
-	}
-
 	if el.Type != ElementTypeMaster {
-		if doc.Cursor+size > doc.Length {
-			return el, ErrUnexpectedEOF
+		d, err := doc.GetElementContent(size)
+		if err != nil {
+			return el, err
 		}
 
-		el.Content = doc.Data[doc.Cursor : doc.Cursor+size]
-		doc.Cursor += el.Size
+		el.Content = d
 	}
 
 	return el, nil
@@ -111,28 +74,48 @@ func (doc *Document) ParseElement() (Element, error) {
 // GetElementID tries to parse the next element's id,
 // starting from the document's current cursor position.
 func (doc *Document) GetElementID() (uint32, error) {
-	if doc.Cursor >= doc.Length {
-		return 0, io.EOF
+	b := make([]byte, 1)
+
+	_, err := doc.r.Read(b)
+	if err != nil {
+		return 0, nil
 	}
 
-	var s = doc.Cursor
-	var b = doc.Data[doc.Cursor]
+	if ((b[0] & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
+		return uint32(b[0]), nil
+	}
+	if ((b[0] & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
+		bb := make([]byte, 2)
+		copy(bb, b)
 
-	if ((b & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
-		doc.Cursor++
-		return uint32(b), nil
+		_, err = doc.r.Read(bb[1:])
+		if err != nil {
+			return 0, err
+		}
+
+		return uint32(pack(2, bb)), nil
 	}
-	if ((b & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
-		doc.Cursor += 2
-		return uint32(pack(2, doc.Data[s:doc.Cursor])), nil
+	if ((b[0] & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
+		bb := make([]byte, 3)
+		copy(bb, b)
+
+		_, err = doc.r.Read(bb[1:])
+		if err != nil {
+			return 0, err
+		}
+
+		return uint32(pack(3, bb)), nil
 	}
-	if ((b & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
-		doc.Cursor += 3
-		return uint32(pack(3, doc.Data[s:doc.Cursor])), nil
-	}
-	if ((b & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
-		doc.Cursor += 4
-		return uint32(pack(4, doc.Data[s:doc.Cursor])), nil
+	if ((b[0] & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
+		bb := make([]byte, 4)
+		copy(bb, b)
+
+		_, err = doc.r.Read(bb[1:])
+		if err != nil {
+			return 0, err
+		}
+
+		return uint32(pack(4, bb)), nil
 	}
 
 	return 0, ErrParse
@@ -140,62 +123,75 @@ func (doc *Document) GetElementID() (uint32, error) {
 
 // GetElementSize tries to parse the next element's size,
 // starting from the document's current cursor position.
-func (doc *Document) GetElementSize() (uint64, error) {
-	if doc.Cursor >= doc.Length {
-		return 0, io.EOF
+func (doc *Document) GetElementSize() (uint64, error) { // TODO: Fix, invalid value returned
+	b := make([]byte, 1)
+
+	_, err := doc.r.Read(b)
+	if err != nil {
+		return 0, nil
 	}
 
 	var mask byte
 	var length uint64
-	var b = doc.Data[doc.Cursor]
 
-	if b >= 0x80 {
+	if b[0] >= 0x80 {
 		length = 1
 		mask = 0x7f
-	} else if b >= 0x40 {
+	} else if b[0] >= 0x40 {
 		length = 2
 		mask = 0x3f
-	} else if b >= 0x20 {
+	} else if b[0] >= 0x20 {
 		length = 3
 		mask = 0x1f
-	} else if b >= 0x10 {
+	} else if b[0] >= 0x10 {
 		length = 4
 		mask = 0x0f
-	} else if b >= 0x08 {
+	} else if b[0] >= 0x08 {
 		length = 5
 		mask = 0x07
-	} else if b >= 0x04 {
+	} else if b[0] >= 0x04 {
 		length = 6
 		mask = 0x03
-	} else if b >= 0x02 {
+	} else if b[0] >= 0x02 {
 		length = 7
 		mask = 0x01
-	} else if b >= 0x01 {
+	} else if b[0] >= 0x01 {
 		length = 8
 		mask = 0x00
 	} else {
 		return 0, ErrParse
 	}
 
-	if doc.Cursor+length >= doc.Length {
-		return 0, ErrUnexpectedEOF
+	bb := make([]byte, length)
+	_, err = doc.r.Read(bb)
+	if err != nil {
+		return 0, err
 	}
 
 	var v uint64 = 0
-	var s = doc.Cursor
+	var s uint64 = 0
 
-	for i, l := doc.Cursor, length; i < s+l; i++ {
-		bb := doc.Data[i]
+	for i, l := uint64(0), length; i < s+l; i++ {
+		by := bb[i]
 
 		if i == s {
-			bb &= mask
+			by &= mask
 		}
 
 		v <<= 8
-		v += uint64(bb)
-
-		doc.Cursor++
+		v += uint64(by)
 	}
 
 	return v, nil
+}
+
+func (doc *Document) GetElementContent(size uint64) ([]byte, error) {
+	buf := make([]byte, size)
+
+	_, err := doc.r.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
 }

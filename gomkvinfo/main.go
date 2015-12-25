@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/quadrifoglio/go-mkv"
@@ -16,7 +15,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	file, err := ioutil.ReadFile(os.Args[1])
+	file, err := os.Open(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
@@ -28,6 +27,6 @@ func main() {
 	})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s at %d\n", err, doc.Cursor)
+		fmt.Fprintf(os.Stderr, "%s\n", err)
 	}
 }
