@@ -78,7 +78,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 
 	_, err := doc.r.Read(b)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	if ((b[0] & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
@@ -123,12 +123,12 @@ func (doc *Document) GetElementID() (uint32, error) {
 
 // GetElementSize tries to parse the next element's size,
 // starting from the document's current cursor position.
-func (doc *Document) GetElementSize() (uint64, error) { // TODO: Fix, invalid value returned
+func (doc *Document) GetElementSize() (uint64, error) {
 	b := make([]byte, 1)
 
 	_, err := doc.r.Read(b)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	var mask byte
@@ -163,9 +163,13 @@ func (doc *Document) GetElementSize() (uint64, error) { // TODO: Fix, invalid va
 	}
 
 	bb := make([]byte, length)
-	_, err = doc.r.Read(bb)
-	if err != nil {
-		return 0, err
+	bb[0] = b[0]
+
+	if length > 1 {
+		_, err = doc.r.Read(bb[1:])
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	var v uint64 = 0
