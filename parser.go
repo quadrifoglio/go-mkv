@@ -40,27 +40,24 @@ func (doc *Document) ParseAll(c func(Element)) error {
 func (doc *Document) ParseElement() (Element, error) {
 	var el Element
 
-	id, err := doc.GetElementID()
+	id, err := doc.GetElementID(&el)
 	if err != nil {
 		return el, err
 	}
 
-	size, err := doc.GetElementSize()
+	size, err := doc.GetElementSize(&el)
 	if err != nil {
 		return el, err
 	}
 
-	el = Element{
-		GetElementRegister(id),
-		nil,
-		0,
-		size,
-		nil,
-		nil,
-	}
+	reg := GetElementRegister(id)
+	el.ID = reg.ID
+	el.Type = reg.Type
+	el.Name = reg.Name
+	el.Size = size
 
 	if el.Type != ElementTypeMaster {
-		d, err := doc.GetElementContent(size)
+		d, err := doc.GetElementContent(&el)
 		if err != nil {
 			return el, err
 		}
@@ -73,7 +70,7 @@ func (doc *Document) ParseElement() (Element, error) {
 
 // GetElementID tries to parse the next element's id,
 // starting from the document's current cursor position.
-func (doc *Document) GetElementID() (uint32, error) {
+func (doc *Document) GetElementID(el *Element) (uint32, error) {
 	b := make([]byte, 1)
 
 	_, err := doc.r.Read(b)
@@ -82,6 +79,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 	}
 
 	if ((b[0] & 0x80) >> 7) == 1 { // Class A ID (on 1 byte)
+		el.Bytes = append(el.Bytes, b[0])
 		return uint32(b[0]), nil
 	}
 	if ((b[0] & 0x40) >> 6) == 1 { // Class B ID (on 2 byte)
@@ -93,6 +91,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 			return 0, err
 		}
 
+		el.Bytes = append(el.Bytes, bb...)
 		return uint32(pack(2, bb)), nil
 	}
 	if ((b[0] & 0x20) >> 5) == 1 { // Class C ID (on 3 bytes)
@@ -104,6 +103,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 			return 0, err
 		}
 
+		el.Bytes = append(el.Bytes, bb...)
 		return uint32(pack(3, bb)), nil
 	}
 	if ((b[0] & 0x10) >> 4) == 1 { // Class D ID (on 4 bytes)
@@ -115,6 +115,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 			return 0, err
 		}
 
+		el.Bytes = append(el.Bytes, bb...)
 		return uint32(pack(4, bb)), nil
 	}
 
@@ -123,7 +124,7 @@ func (doc *Document) GetElementID() (uint32, error) {
 
 // GetElementSize tries to parse the next element's size,
 // starting from the document's current cursor position.
-func (doc *Document) GetElementSize() (uint64, error) {
+func (doc *Document) GetElementSize(el *Element) (uint64, error) {
 	b := make([]byte, 1)
 
 	_, err := doc.r.Read(b)
@@ -186,16 +187,20 @@ func (doc *Document) GetElementSize() (uint64, error) {
 		v += uint64(by)
 	}
 
+	el.Bytes = append(el.Bytes, bb...)
 	return v, nil
 }
 
-func (doc *Document) GetElementContent(size uint64) ([]byte, error) {
-	buf := make([]byte, size)
+// GetElementContent returns the element's data (if any)
+// Data is present if the element's type is not Master
+func (doc *Document) GetElementContent(el *Element) ([]byte, error) {
+	buf := make([]byte, el.Size)
 
 	_, err := doc.r.Read(buf)
 	if err != nil {
 		return nil, err
 	}
 
+	el.Bytes = append(el.Bytes, buf...)
 	return buf, nil
 }
