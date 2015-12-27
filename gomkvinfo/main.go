@@ -26,7 +26,6 @@ func main() {
 	doc := mkv.InitDocument(file)
 	err = doc.ParseAll(func(el mkv.Element) {
 		fmt.Printf("Element %s - %d bytes\n", el.Name, el.Size)
-		dump.Write(el.Bytes)
 	})
 
 	if err != nil {

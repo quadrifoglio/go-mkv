@@ -10,7 +10,7 @@ var (
 	ErrUnexpectedEOF = errors.New("Unexpected EOF")
 )
 
-// InitDocument creates a WebM document containing the file data
+// InitDocument creates a MKV/WebM document containing the file data
 // It does not do any parsing
 func InitDocument(r io.Reader) *Document {
 	doc := new(Document)
@@ -19,7 +19,7 @@ func InitDocument(r io.Reader) *Document {
 	return doc
 }
 
-// ParseAll parses the entire WebM document
+// ParseAll parses the entire MKV/WebM document
 // When an EBML/WebM element is encountered, it calls the provided function
 // and passes the newly parsed element
 func (doc *Document) ParseAll(c func(Element)) error {
@@ -35,7 +35,7 @@ func (doc *Document) ParseAll(c func(Element)) error {
 	return nil
 }
 
-// ParseElement parses an EBML/WebM element starting at the document's current cursor position
+// ParseElement parses an EBML element starting at the document's current cursor position
 // Because of its nature, it does not set the elements's parent or level.
 func (doc *Document) ParseElement() (Element, error) {
 	var el Element
@@ -173,21 +173,11 @@ func (doc *Document) GetElementSize(el *Element) (uint64, error) {
 		}
 	}
 
-	var v uint64 = 0
-	var s uint64 = 0
-
-	for i, l := uint64(0), length; i < s+l; i++ {
-		by := bb[i]
-
-		if i == s {
-			by &= mask
-		}
-
-		v <<= 8
-		v += uint64(by)
-	}
-
 	el.Bytes = append(el.Bytes, bb...)
+
+	bb[0] &= mask
+	v := pack(int(length), bb)
+
 	return v, nil
 }
 
