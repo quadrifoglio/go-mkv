@@ -17,7 +17,7 @@ type ElementRegister struct {
 	Name string
 }
 
-// Element is obviously just a Matroska/WebM/EBML element
+// Element is a Matroska/WebM/EBML element
 type Element struct {
 	ElementRegister
 
