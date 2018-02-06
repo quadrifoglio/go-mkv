@@ -35,7 +35,7 @@ func (doc *Document) ParseAll(c func(Element)) error {
 	return nil
 }
 
-// ParseElement parses an EBML element starting at the document's current cursor position
+// ParseElement parses an EBML element starting at the document's current cursor position. 
 // Because of its nature, it does not set the elements's parent or level.
 func (doc *Document) ParseElement() (Element, error) {
 	var el Element
