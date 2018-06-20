@@ -35,7 +35,7 @@ func (doc *Document) ParseAll(c func(Element)) error {
 	return nil
 }
 
-// ParseElement parses an EBML element starting at the document's current cursor position. 
+// ParseElement parses an EBML element starting at the document's current cursor position.
 // Because of its nature, it does not set the elements's parent or level.
 func (doc *Document) ParseElement() (Element, error) {
 	var el Element
@@ -73,7 +73,7 @@ func (doc *Document) ParseElement() (Element, error) {
 func (doc *Document) GetElementID(el *Element) (uint32, error) {
 	b := make([]byte, 1)
 
-	_, err := doc.r.Read(b)
+	_, err := io.ReadFull(doc.r, b)
 	if err != nil {
 		return 0, err
 	}
@@ -86,7 +86,7 @@ func (doc *Document) GetElementID(el *Element) (uint32, error) {
 		bb := make([]byte, 2)
 		copy(bb, b)
 
-		_, err = doc.r.Read(bb[1:])
+		_, err = io.ReadFull(doc.r, bb[1:])
 		if err != nil {
 			return 0, err
 		}
@@ -98,7 +98,7 @@ func (doc *Document) GetElementID(el *Element) (uint32, error) {
 		bb := make([]byte, 3)
 		copy(bb, b)
 
-		_, err = doc.r.Read(bb[1:])
+		_, err = io.ReadFull(doc.r, bb[1:])
 		if err != nil {
 			return 0, err
 		}
@@ -110,7 +110,7 @@ func (doc *Document) GetElementID(el *Element) (uint32, error) {
 		bb := make([]byte, 4)
 		copy(bb, b)
 
-		_, err = doc.r.Read(bb[1:])
+		_, err = io.ReadFull(doc.r, bb[1:])
 		if err != nil {
 			return 0, err
 		}
@@ -127,7 +127,7 @@ func (doc *Document) GetElementID(el *Element) (uint32, error) {
 func (doc *Document) GetElementSize(el *Element) (uint64, error) {
 	b := make([]byte, 1)
 
-	_, err := doc.r.Read(b)
+	_, err := io.ReadFull(doc.r, b)
 	if err != nil {
 		return 0, err
 	}
@@ -167,7 +167,7 @@ func (doc *Document) GetElementSize(el *Element) (uint64, error) {
 	bb[0] = b[0]
 
 	if length > 1 {
-		_, err = doc.r.Read(bb[1:])
+		_, err = io.ReadFull(doc.r, bb[1:])
 		if err != nil {
 			return 0, err
 		}
@@ -186,7 +186,7 @@ func (doc *Document) GetElementSize(el *Element) (uint64, error) {
 func (doc *Document) GetElementContent(el *Element) ([]byte, error) {
 	buf := make([]byte, el.Size)
 
-	_, err := doc.r.Read(buf)
+	_, err := io.ReadFull(doc.r, buf)
 	if err != nil {
 		return nil, err
 	}
